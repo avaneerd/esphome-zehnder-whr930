@@ -3,6 +3,7 @@ import esphome.config_validation as cv
 from esphome.components import sensor
 from esphome.const import (
     DEVICE_CLASS_EMPTY,
+    STATE_CLASS_MEASUREMENT,
     UNIT_EMPTY,
 )
 from esphome.core import coroutine
@@ -31,13 +32,15 @@ CONFIG_SCHEMA = cv.Schema(
             unit_of_measurement=UNIT_EMPTY,
             icon=ICON_FAN,
             accuracy_decimals=0,
-            device_class=DEVICE_CLASS_EMPTY
+            device_class=DEVICE_CLASS_EMPTY,
+            state_class=STATE_CLASS_MEASUREMENT,
         ),
         cv.Optional(CONF_SUPPLY_FAN_ACTIVE): sensor.sensor_schema(
             unit_of_measurement=UNIT_EMPTY,
             icon=ICON_FAN_CHEVRON_DOWN,
             accuracy_decimals=0,
-            device_class=DEVICE_CLASS_EMPTY
+            device_class=DEVICE_CLASS_EMPTY,
+            state_class=STATE_CLASS_MEASUREMENT,
         )
     }
 )
