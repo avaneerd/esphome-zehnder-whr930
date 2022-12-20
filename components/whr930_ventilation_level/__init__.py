@@ -17,9 +17,9 @@ Whr930VentilationLevelComponent = whr930_ventilation_level_ns.class_(
 
 CONFIG_SCHEMA = cv.Schema(
     {
-        cv.GenerateID(): cv.declare_id(Whr930VentilationLevelComponent)
+        cv.GenerateID(): cv.declare_id(Whr930VentilationLevelComponent),
     }
-).extend(uart.UART_DEVICE_SCHEMA),
+).extend(uart.UART_DEVICE_SCHEMA)
 
 
 async def to_code(config):
