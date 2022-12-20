@@ -15,7 +15,7 @@ CONF_WHR930_VENTILATION_LEVEL_ID = "whr930_ventilation_level_id"
 whr930_ns = cg.esphome_ns.namespace("whr930")
 
 Whr930VentilationLevelComponent = whr930_ns.class_(
-    "Whr930VentilationLevelComponent", cg.PollingComponent
+    "Whr930VentilationLevelComponent", cg.Component
 )
 
 DEPENDENCIES = ["whr930"]
