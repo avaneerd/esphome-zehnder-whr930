@@ -6,10 +6,9 @@ namespace whr930 {
 
 class Whr930VentilationLevelComponent : public PollingComponent {
  public:
-  Whr930VentilationLevelComponent(Whr930 *whr930) : PollingComponent(60000) {
-    this->whr930_ = whr930_;
-  }
+  Whr930VentilationLevelComponent() : PollingComponent(60000) {}
 
+  void set_whr930(Whr930 *whr930) { this->whr930_ = whr930; }
   void set_ventilation_level_sensor(sensor::Sensor *sensor) { this->ventilation_level_sensor_ = sensor; }
   void set_supply_fan_active_text_sensor(text_sensor::TextSensor *sensor) { this->supply_fan_active_text_sensor_ = sensor; }
 
