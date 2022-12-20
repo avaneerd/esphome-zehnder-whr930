@@ -9,10 +9,14 @@ AUTO_LOAD = ["sensor", "text_sensor"]
 
 CONF_WHR930_VENTILATION_LEVEL_ID = "whr930_ventilation_level_id"
 
-whr930_ventilation_level_ns = cg.esphome_ns.namespace("whr930_ventilation_level")
+whr930_ns = cg.esphome_ns.namespace("whr930")
 
-Whr930VentilationLevelComponent = whr930_ventilation_level_ns.class_(
-    "Whr930VentilationLevelComponent", cg.Component, uart.UARTDevice
+Whr930BaseComponent = whr930_ns.class_(
+    "Whr930BaseComponent", cg.PollingComponent, uart.UARTDevice
+)
+
+Whr930VentilationLevelComponent = whr930_ns.class_(
+    "Whr930VentilationLevelComponent", Whr930BaseComponent
 )
 
 CONFIG_SCHEMA = cv.Schema(

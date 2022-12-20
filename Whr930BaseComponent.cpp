@@ -1,6 +1,9 @@
 #include <algorithm>
 #include "Whr930BaseComponent.h"
 
+namespace esphome {
+namespace whr930 {
+
 void Whr930BaseComponent::update()
 {
     this->send_command();
@@ -122,4 +125,7 @@ bool Whr930BaseComponent::is_expected_byte(uint8_t expected_byte)
     }
 
     return this->read_byte(received_byte);
+}
+
+}
 }

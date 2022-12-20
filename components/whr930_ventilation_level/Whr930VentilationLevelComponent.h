@@ -2,7 +2,7 @@
 #include "../Whr930BaseComponent.h"
 
 namespace esphome {
-namespace whr930_ventilation_level {
+namespace whr930 {
 
 class Whr930VentilationLevelComponent : Whr930BaseComponent {
  public:

@@ -1,5 +1,8 @@
 #include "esphome.h"
 
+namespace esphome {
+namespace whr930 {
+
 class Whr930BaseComponent : public PollingComponent, public UARTDevice {
  public:
   Whr930BaseComponent(UARTComponent *parent) : PollingComponent(60000), UARTDevice(parent) {}
@@ -15,3 +18,6 @@ class Whr930BaseComponent : public PollingComponent, public UARTDevice {
  private:
   void send_command();
 };
+
+}
+}
