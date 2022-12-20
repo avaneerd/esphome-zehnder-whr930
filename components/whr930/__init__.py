@@ -7,21 +7,17 @@ CODEOWNERS = ["@avaneerd"]
 DEPENDENCIES = ["uart"]
 AUTO_LOAD = ["sensor", "text_sensor"]
 
-CONF_WHR930_VENTILATION_LEVEL_ID = "whr930_ventilation_level_id"
+CONF_WHR930_ID = "whr930_id"
 
 whr930_ns = cg.esphome_ns.namespace("whr930")
 
-Whr930BaseComponent = whr930_ns.class_(
-    "Whr930BaseComponent", cg.PollingComponent, uart.UARTDevice
-)
-
-Whr930VentilationLevelComponent = whr930_ns.class_(
-    "Whr930VentilationLevelComponent", Whr930BaseComponent
+Whr930 = whr930_ns.class_(
+    "Whr930", cg.Component, uart.UARTDevice
 )
 
 CONFIG_SCHEMA = cv.Schema(
     {
-        cv.GenerateID(): cv.declare_id(Whr930VentilationLevelComponent),
+        cv.GenerateID(): cv.declare_id(Whr930),
     }
 ).extend(uart.UART_DEVICE_SCHEMA)
 

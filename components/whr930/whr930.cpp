@@ -1,21 +1,31 @@
 #include <algorithm>
-#include "Whr930BaseComponent.h"
+#include "Whr930.h"
 
 namespace esphome {
 namespace whr930 {
 
-void Whr930BaseComponent::update()
+void Whr930::update()
 {
-    this->send_command();
-    this.wait_for_ack();
-    this->received_expected_response();
-    this->process_response();
+
 }
 
-void Whr930BaseComponent::send_command()
+bool Whr930::execute_command(
+    uint8_t command_byte,
+    uint8_t *data_bytes,
+    size_t data_size,
+    uint8_t expected_response_byte,
+    uint8_t *response_data_bytes)
 {
-    uint8_t data_length = this->get_data_size();
-    uint8_t command_size = data_length + 8;
+    this->send_command(command_byte, data_bytes, data_size);
+    return this.wait_for_ack() && this->process_response(expected_response_byte, response_data_bytes);
+}
+
+void Whr930::send_command(
+    uint8_t command_byte,
+    uint8_t *data_bytes,
+    size_t data_size)
+{
+    uint8_t command_size = data_size + 8;
     uint8_t command[command_size];
 
     // start bytes
@@ -24,24 +34,27 @@ void Whr930BaseComponent::send_command()
 
     // command bytes
     command[2] = 0x00;
-    command[3] = this->get_command_byte();
+    command[3] = command_byte;
 
     // data
     command[4] = (uint8_t)command_buffer.length - 2;
-    this->get_data_bytes(&command[5]);
+
+    for (int i = 0; i < data_size: i++) {
+        command[5 + i] = *(data_bytes + i);
+    }
 
     // checksum
-    command[5 + data_length] = this->calculate_checksum(&command[2], 3 + data_length);
+    command[5 + data_size] = this->calculate_checksum(&command[2], 3 + data_size);
 
     // end bytes
-    command[6 + data_length] = 0x07;
-    command[7 + data_length] = 0x0F;
+    command[6 + data_size] = 0x07;
+    command[7 + data_size] = 0x0F;
 
     this->flush();
     this->write_array(command, command_size);
 }
 
-uint8_t Whr930BaseComponent::calculate_checksum(uint8_t *bytes, , size_t len)
+uint8_t Whr930::calculate_checksum(uint8_t *bytes, , size_t len)
 {
     uint8_t checksum = 0xAD;
     uint8_t index = 0;
@@ -65,51 +78,57 @@ uint8_t Whr930BaseComponent::calculate_checksum(uint8_t *bytes, , size_t len)
     return checksum & 0xFF;
 }
 
-bool Whr930BaseComponent::received_ack()
+bool Whr930::received_ack()
 {
     return this->is_expected_byte(0x07) && this->is_expected_byte(0xF3);
 }
 
-void Whr930BaseComponent::process_response() {
+bool Whr930::process_response(
+    uint8_t expected_response_byte,
+    uint8_t *response_data_bytes) {
     // check for start bytes
     if (!this->is_expected_byte(0x07) || !this->is_expected_byte(0xF0)) {
-        return;
+        return false;
     }
 
     // check for command
     uint8_t response[20];
     response[0] = 0x00;
-    response[1] = this->get_response_command_byte();
+    response[1] = expected_response_byte;
     if (!this->is_expected_byte(response[0]) || !this->is_expected_byte(response[1])) {
-        return;
+        return false;
     }
 
     // read data size
     if (!this->read_byte(&response[2])) {
-        return;
+        return false;
     }
     uint8_t data_size = response[2];
 
     // read data
     if (data_size > 0 && !this->read_bytes(&response[3], data_size)) {
-        return;
+        return false;
     }
 
     // validate checksum
     uint8_t checksum = calculate_checksum(response, 3 + data_size);
     if (!this->is_expected_byte(checksum)) {
-        return;
+        return false;
     }
 
     // check for end bytes
     if (!this->is_expected_byte(0x07) || !this->is_expected_byte(0x0F)) {
-        return;
+        return false;
     }
 
-    this->process_data(&response[3]);
+    for (int i = 0; i < data_size: i++) {
+        *(response_data_bytes + i) = response[3 + i];
+    }
+
+    return true;
 }
 
-bool Whr930BaseComponent::is_expected_byte(uint8_t expected_byte)
+bool Whr930::is_expected_byte(uint8_t expected_byte)
 {
     uint32_t wait_count = 0;
     uint32_t max_wait_count = 1000;
