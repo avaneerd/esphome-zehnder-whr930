@@ -1,5 +1,5 @@
 #include "esphome.h"
-#include "../../Whr930BaseComponent.h"
+#include "Whr930BaseComponent.h"
 
 namespace esphome {
 namespace whr930 {
