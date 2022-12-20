@@ -28,10 +28,16 @@ CONFIG_SCHEMA = cv.Schema(
     {
         cv.GenerateID(CONF_WHR930_VENTILATION_LEVEL_ID): cv.use_id(Whr930VentilationLevelComponent),
         cv.Optional(CONF_VENTILATION_LEVEL): sensor.sensor_schema(
-            UNIT_EMPTY, ICON_FAN, 0, DEVICE_CLASS_EMPTY
+            unit_of_measurement=UNIT_EMPTY,
+            icon=ICON_FAN,
+            accuracy_decimals=0,
+            device_class=DEVICE_CLASS_EMPTY
         ),
         cv.Optional(CONF_SUPPLY_FAN_ACTIVE): sensor.sensor_schema(
-            UNIT_EMPTY, ICON_FAN_CHEVRON_DOWN, 0, DEVICE_CLASS_EMPTY
+            unit_of_measurement=UNIT_EMPTY,
+            icon=ICON_FAN_CHEVRON_DOWN,
+            accuracy_decimals=0,
+            device_class=DEVICE_CLASS_EMPTY
         )
     }
 )
