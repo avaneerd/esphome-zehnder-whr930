@@ -61,6 +61,9 @@ def setup_conf(config, key, hub):
 
 
 async def to_code(config):
+    var = cg.new_Pvariable(config[CONF_ID])
+    await cg.register_component(var, config)
+
     hub = yield cg.get_variable(config[CONF_WHR930_VENTILATION_LEVEL_ID])
     for key in TYPES:
         yield setup_conf(config, key, hub)
