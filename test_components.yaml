@@ -1,0 +1,23 @@
+esphome:
+  name: whr930
+
+rp2040:
+  board: rpipicow
+  framework:
+    # Required until https://github.com/platformio/platform-raspberrypi/pull/36 is merged
+    platform_version: https://github.com/maxgerhardt/platform-raspberrypi.git
+
+external_components:
+  - source: components
+
+uart:
+  id: uart_bus
+  tx_pin: GPIO0
+  rx_pin: GPIO1
+  baud_rate: 9600
+
+whr930:
+
+sensor:
+- platform: whr930-ventilation-level
+  name: "Ventilation level"

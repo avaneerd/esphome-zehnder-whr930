@@ -7,8 +7,6 @@ CODEOWNERS = ["@avaneerd"]
 DEPENDENCIES = ["uart"]
 AUTO_LOAD = ["sensor", "text_sensor"]
 
-CONF_WHR930_ID = "whr930_id"
-
 whr930_ns = cg.esphome_ns.namespace("whr930")
 
 Whr930 = whr930_ns.class_(
