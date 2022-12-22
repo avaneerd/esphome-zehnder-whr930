@@ -1,13 +1,8 @@
 #include <algorithm>
-#include "Whr930.h"
+#include "whr930.h"
 
 namespace esphome {
 namespace whr930 {
-
-void Whr930::update()
-{
-
-}
 
 bool Whr930::execute_command(
     uint8_t command_byte,
@@ -17,7 +12,7 @@ bool Whr930::execute_command(
     uint8_t *response_data_bytes)
 {
     this->send_command(command_byte, data_bytes, data_size);
-    return this.wait_for_ack() && this->process_response(expected_response_byte, response_data_bytes);
+    return this->received_ack() && this->process_response(expected_response_byte, response_data_bytes);
 }
 
 void Whr930::send_command(
@@ -37,9 +32,9 @@ void Whr930::send_command(
     command[3] = command_byte;
 
     // data
-    command[4] = (uint8_t)command_buffer.length - 2;
+    command[4] = (uint8_t)data_size;
 
-    for (int i = 0; i < data_size: i++) {
+    for (int i = 0; i < data_size; i++) {
         command[5 + i] = *(data_bytes + i);
     }
 
@@ -54,7 +49,7 @@ void Whr930::send_command(
     this->write_array(command, command_size);
 }
 
-uint8_t Whr930::calculate_checksum(uint8_t *bytes, , size_t len)
+uint8_t Whr930::calculate_checksum(uint8_t *bytes, size_t len)
 {
     uint8_t checksum = 0xAD;
     uint8_t index = 0;
@@ -73,7 +68,7 @@ uint8_t Whr930::calculate_checksum(uint8_t *bytes, , size_t len)
 
         checksum += value;
 
-    } while (++index < len)
+    } while (++index < len);
 
     return checksum & 0xFF;
 }
@@ -106,7 +101,7 @@ bool Whr930::process_response(
     uint8_t data_size = response[2];
 
     // read data
-    if (data_size > 0 && !this->read_bytes(&response[3], data_size)) {
+    if (data_size > 0 && !this->read_array(&response[3], data_size)) {
         return false;
     }
 
@@ -121,7 +116,7 @@ bool Whr930::process_response(
         return false;
     }
 
-    for (int i = 0; i < data_size: i++) {
+    for (int i = 0; i < data_size; i++) {
         *(response_data_bytes + i) = response[3 + i];
     }
 
@@ -139,11 +134,11 @@ bool Whr930::is_expected_byte(uint8_t expected_byte)
     }
 
     uint8_t received_byte;
-    if (!this->peek_byte(received_byte) || received_byte != expected_byte) {
+    if (!this->peek_byte(&received_byte) || received_byte != expected_byte) {
         return false;
     }
 
-    return this->read_byte(received_byte);
+    return this->read_byte(&received_byte);
 }
 
 }

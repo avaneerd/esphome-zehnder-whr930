@@ -16,8 +16,7 @@ uart:
   rx_pin: GPIO1
   baud_rate: 9600
 
-whr930:
-
 sensor:
-- platform: whr930-ventilation-level
-  name: "Ventilation level"
+- platform: whr930
+  ventilation_level:
+    name: "Ventilation level"
