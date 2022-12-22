@@ -20,3 +20,8 @@ sensor:
 - platform: whr930
   ventilation_level:
     name: "Ventilation level"
+
+text_sensor:
+- platform: whr930
+  supply_fan_active:
+    name: "Supply fan active"
