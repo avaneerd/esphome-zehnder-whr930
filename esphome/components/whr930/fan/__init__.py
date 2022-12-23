@@ -31,6 +31,6 @@ async def to_code(config):
     for conf in config.items():
         if not isinstance(conf, dict):
             continue
-        var = cg.new_Pvariable(config[CONF_OUTPUT_ID], parent)
-        await cg.register_component(var, config)
-        await fan.register_fan(var, config)
+        var = cg.new_Pvariable(conf[CONF_OUTPUT_ID], parent)
+        await cg.register_component(var, conf)
+        await fan.register_fan(var, conf)
