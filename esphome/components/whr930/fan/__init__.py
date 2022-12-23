@@ -8,31 +8,34 @@ from esphome.const import (
 
 from .. import CONF_WHR930_ID, whr930_ns, Whr930
 
-Whr930SupplyFan = whr930_ns.class_(
-    "Whr930SupplyFan", cg.PollingComponent, fan.Fan
+CONF_FAN_TYPE = 'type'
+
+FanType = whr930_ns.enum("FanType", is_class=True)
+FAN_TYPE_ENUM = {
+    "EXHAUST": FanType.EXHAUST,
+    "SUPPLY": FanType.SUPPLY,
+}
+
+Whr930Fan = whr930_ns.class_(
+    "Whr930Fan", cg.PollingComponent, fan.Fan
 )
 
 AUTO_LOAD = ["whr930"]
 
 CONFIG_SCHEMA = cv.All(
+    fan.FAN_SCHEMA.extend(
     {
-        cv.GenerateID(CONF_WHR930_ID): cv.use_id(Whr930),
-        cv.Optional("supply_fan"): fan.FAN_SCHEMA.extend(
-            {
-                cv.GenerateID(CONF_ID): cv.declare_id(Whr930SupplyFan),
-                cv.Optional(CONF_SPEED_COUNT, default=45): cv.int_range(min=45, max=100),
-            }
-        ).extend(cv.COMPONENT_SCHEMA)
+        cv.GenerateID(): cv.declare_id(Whr930Fan),
+        cv.Required(CONF_FAN_TYPE): cv.enum(FAN_TYPE_ENUM, upper=True),
+        cv.Optional(CONF_SPEED_COUNT, default=45): cv.int_range(min=45, max=100),
+        cv.GenerateID(CONF_WHR930_ID): cv.use_id(Whr930)
     }
+    ).extend(cv.COMPONENT_SCHEMA)
 )
 
 async def to_code(config):
     parent = await cg.get_variable(config[CONF_WHR930_ID])
-    for conf in config.items():
-        if not isinstance(conf, dict):
-            continue
-        id = conf[CONF_ID]
-        if id and id.type == fan.Fan:
-            var = cg.new_Pvariable(id, parent)
-            await cg.register_component(var, conf)
-            await fan.register_fan(var, conf)
+    id = config[CONF_ID]
+    var = cg.new_Pvariable(id, parent)
+    await cg.register_component(var, config)
+    await fan.register_fan(var, config)

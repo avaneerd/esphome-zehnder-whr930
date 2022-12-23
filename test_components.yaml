@@ -18,5 +18,5 @@ uart:
 
 fan:
 - platform: whr930
-  supply_fan:
-    name: "Supply fan"
+  name: "Supply fan"
+  type: "SUPPLY"

@@ -4,12 +4,15 @@
 #include "esphome/components/whr930/whr930.h"
 #include "esphome/components/fan/fan.h"
 
+
 namespace esphome {
 namespace whr930 {
 
-class Whr930SupplyFan : public PollingComponent, public fan::Fan {
+enum class FanType { EXHAUST = 0, SUPPLY = 1 };
+
+class Whr930Fan : public PollingComponent, public fan::Fan {
  public:
-  Whr930SupplyFan(Whr930 *whr930) : whr930_(whr930), PollingComponent(60000) { }
+  Whr930Fan(Whr930 *whr930) : whr930_(whr930), PollingComponent(60000) { }
 
   uint8_t response_bytes[13];
 
@@ -23,12 +26,16 @@ class Whr930SupplyFan : public PollingComponent, public fan::Fan {
     }
   }
 
-  void control(const fan::FanCall &call) override {
-
+  fan::FanTraits get_traits() override {
+    return fan::FanTraits(false, true, false, 55);
   }
 
  protected:
   Whr930 *whr930_;
+  FanType *fan_type_;
+  void control(const fan::FanCall &call) override {
+
+  }
 };
 
 }
