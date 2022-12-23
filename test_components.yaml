@@ -8,7 +8,7 @@ rp2040:
     platform_version: https://github.com/maxgerhardt/platform-raspberrypi.git
 
 external_components:
-  - source: components
+  - source: esphome/components
 
 uart:
   id: uart_bus
@@ -16,12 +16,7 @@ uart:
   rx_pin: GPIO1
   baud_rate: 9600
 
-sensor:
+fan:
 - platform: whr930
-  ventilation_level:
-    name: "Ventilation level"
-
-text_sensor:
-- platform: whr930
-  supply_fan_active:
-    name: "Supply fan active"
+  supply_fan:
+    name: "Supply fan"

@@ -1,4 +1,3 @@
-#include <algorithm>
 #include "whr930.h"
 
 namespace esphome {
