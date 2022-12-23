@@ -27,7 +27,7 @@ CONFIG_SCHEMA = cv.All(
     {
         cv.GenerateID(): cv.declare_id(Whr930Fan),
         cv.Required(CONF_FAN_TYPE): cv.enum(FAN_TYPE_ENUM, upper=True),
-        cv.Optional(CONF_SPEED_COUNT, default=45): cv.int_range(min=45, max=100),
+        cv.Optional(CONF_SPEED_COUNT, default=100): cv.int_range(min=1, max=100),
         cv.GenerateID(CONF_WHR930_ID): cv.use_id(Whr930)
     }
     ).extend(cv.COMPONENT_SCHEMA)
