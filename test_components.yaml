@@ -20,3 +20,6 @@ fan:
 - platform: whr930
   name: "Supply fan"
   type: "SUPPLY"
+- platform: whr930
+  name: "Exhaust fan"
+  type: "EXHAUST"
