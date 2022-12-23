@@ -20,7 +20,7 @@ class Whr930Fan : public PollingComponent, public fan::Fan {
     const uint8_t command_byte = 0xCD;
     const uint8_t expected_response_byte = 0xCE;
     if (this->whr930_->execute_command(command_byte, 0, 0, expected_response_byte, response_bytes)) {
-      this->speed = response_bytes[5];
+      this->speed = response_bytes[4];
       this->state = response_bytes[9] == 1;
       this->publish_state();
     }
