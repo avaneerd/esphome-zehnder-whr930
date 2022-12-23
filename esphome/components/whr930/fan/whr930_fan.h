@@ -12,7 +12,7 @@ enum class FanType { EXHAUST = 0, SUPPLY = 1 };
 
 class Whr930Fan : public PollingComponent, public fan::Fan {
  public:
-  Whr930Fan(Whr930 *whr930) : whr930_(whr930), PollingComponent(60000) { }
+  Whr930Fan(Whr930 *whr930, FanType fan_type) : whr930_(whr930), fan_type_(&fan_type), PollingComponent(60000) { }
 
   uint8_t response_bytes[13];
 

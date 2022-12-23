@@ -36,6 +36,6 @@ CONFIG_SCHEMA = cv.All(
 async def to_code(config):
     parent = await cg.get_variable(config[CONF_WHR930_ID])
     id = config[CONF_ID]
-    var = cg.new_Pvariable(id, parent)
+    var = cg.new_Pvariable(id, parent, config[CONF_FAN_TYPE])
     await cg.register_component(var, config)
     await fan.register_fan(var, config)
