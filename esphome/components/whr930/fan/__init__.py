@@ -2,7 +2,7 @@ import esphome.codegen as cg
 import esphome.config_validation as cv
 from esphome.components import fan
 from esphome.const import (
-    CONF_OUTPUT_ID,
+    CONF_ID,
     CONF_SPEED_COUNT,
 )
 
@@ -19,7 +19,7 @@ CONFIG_SCHEMA = cv.All(
         cv.GenerateID(CONF_WHR930_ID): cv.use_id(Whr930),
         cv.Optional("supply_fan"): fan.FAN_SCHEMA.extend(
             {
-                cv.GenerateID(CONF_OUTPUT_ID): cv.declare_id(Whr930SupplyFan),
+                cv.GenerateID(CONF_ID): cv.declare_id(Whr930SupplyFan),
                 cv.Optional(CONF_SPEED_COUNT, default=45): cv.int_range(min=45, max=100),
             }
         ).extend(cv.COMPONENT_SCHEMA)
@@ -31,6 +31,8 @@ async def to_code(config):
     for conf in config.items():
         if not isinstance(conf, dict):
             continue
-        var = cg.new_Pvariable(conf[CONF_OUTPUT_ID], parent)
-        await cg.register_component(var, conf)
-        await fan.register_fan(var, conf)
+        id = conf[CONF_ID]
+        if id and id.type == fan.Fan:
+            var = cg.new_Pvariable(id, parent)
+            await cg.register_component(var, conf)
+            await fan.register_fan(var, conf)
