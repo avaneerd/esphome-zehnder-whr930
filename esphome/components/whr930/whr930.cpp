@@ -3,8 +3,6 @@
 namespace esphome {
 namespace whr930 {
 
-static const char *const TAG = "whr930";
-
 bool Whr930::execute_request(
     uint8_t command_byte,
     uint8_t *data_bytes,
