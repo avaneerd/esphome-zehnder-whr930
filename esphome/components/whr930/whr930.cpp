@@ -6,7 +6,7 @@ namespace whr930 {
 
 static const char *const TAG = "whr930";
 
-bool Whr930::execute_command(
+bool Whr930::execute_request(
     uint8_t command_byte,
     uint8_t *data_bytes,
     size_t data_size,
@@ -15,6 +15,15 @@ bool Whr930::execute_command(
 {
     this->send_command(command_byte, data_bytes, data_size);
     return this->received_ack() && this->process_response(expected_response_byte, response_data_bytes);
+}
+
+bool Whr930::execute_command(
+    uint8_t command_byte,
+    uint8_t *data_bytes,
+    size_t data_size)
+{
+    this->send_command(command_byte, data_bytes, data_size);
+    return this->received_ack();
 }
 
 void Whr930::send_command(

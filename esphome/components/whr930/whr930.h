@@ -10,12 +10,17 @@ class Whr930 : public uart::UARTDevice, public Component {
  public:
   Whr930(uart::UARTComponent *uart) : uart::UARTDevice(uart) { }
 
-    bool execute_command(
+    bool execute_request(
     uint8_t command_byte,
     uint8_t *data_bytes,
     size_t data_size,
     uint8_t expected_response_byte,
     uint8_t *response_data_bytes);
+
+    bool execute_command(
+    uint8_t command_byte,
+    uint8_t *data_bytes,
+    size_t data_size);
 
  protected:
   void send_command(
