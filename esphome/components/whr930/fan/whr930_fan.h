@@ -3,7 +3,6 @@
 #include "esphome/core/component.h"
 #include "esphome/components/whr930/whr930.h"
 #include "esphome/components/fan/fan.h"
-#include "esphome/core/log.h"
 
 
 namespace esphome {
@@ -23,10 +22,6 @@ class Whr930Fan : public PollingComponent, public fan::Fan {
   Whr930Fan(Whr930 *whr930, FanType fan_type) :
     whr930_(whr930),
     PollingComponent(60000) {
-      ESP_LOGCONFIG(TAG, "fan_type_: %d", fan_type);
-      ESP_LOGCONFIG(TAG, "fan_type_ == BOTH: %d", fan_type == FanType::BOTH);
-      ESP_LOGCONFIG(TAG, "fan_type_ & EXHAUST: %d", fan_type & FanType::EXHAUST);
-      ESP_LOGCONFIG(TAG, "fan_type_ & EXHAUST == EXHAUST: %d", fan_type & FanType::EXHAUST == FanType::EXHAUST);
       is_exhaust = fan_type & FanType::EXHAUST == FanType::EXHAUST;
       is_supply = fan_type & FanType::SUPPLY == FanType::SUPPLY;
      }
