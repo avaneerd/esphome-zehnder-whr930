@@ -68,6 +68,8 @@ class Whr930Fan : public PollingComponent, public fan::Fan {
       data_bytes[data_index] = this->speed;
       this->whr930_->execute_command(command_byte, data_bytes, 10);
     }
+
+    this->publish_state();
   }
 };
 
