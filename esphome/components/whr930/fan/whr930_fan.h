@@ -19,6 +19,7 @@ class Whr930Fan : public PollingComponent, public fan::Fan {
    }
 
   const uint8_t min_speed_level = 45;
+  const uint8_t max_speed_level = 100;
   uint8_t response_bytes[13];
   uint8_t data_bytes[10] = { 15, 45, 75, 15, 45, 75, 100, 100, 1, 1 };
 
@@ -26,14 +27,14 @@ class Whr930Fan : public PollingComponent, public fan::Fan {
     const uint8_t command_byte = 0xCD;
     const uint8_t expected_response_byte = 0xCE;
     if (this->whr930_->execute_request(command_byte, 0, 0, expected_response_byte, response_bytes)) {
-      this->speed = response_bytes[*this->fan_type_ == FanType::EXHAUST ? 1 : 4] - min_speed_level;
+      this->speed = response_bytes[*this->fan_type_ == FanType::EXHAUST ? 1 : 4];
       this->state = *this->fan_type_ == FanType::EXHAUST || response_bytes[9] == 1;
       this->publish_state();
     }
   }
 
   fan::FanTraits get_traits() override {
-    return fan::FanTraits(false, true, false, 55);
+    return fan::FanTraits(false, true, false, 100);
   }
 
  protected:
@@ -49,7 +50,7 @@ class Whr930Fan : public PollingComponent, public fan::Fan {
 
     int new_speed = *call.get_speed();
 
-    if (new_speed < 0 || new_speed > 55) {
+    if (new_speed < min_speed_level || new_speed > max_speed_level) {
       return;
     }
 
@@ -59,7 +60,7 @@ class Whr930Fan : public PollingComponent, public fan::Fan {
 
     this->speed = new_speed;
 
-    data_bytes[*this->fan_type_ == FanType::EXHAUST ? 1 : 4] = this->speed + min_speed_level;
+    data_bytes[*this->fan_type_ == FanType::EXHAUST ? 1 : 4] = this->speed;
     this->whr930_->execute_command(command_byte, data_bytes, 10);
 
     this->publish_state();
