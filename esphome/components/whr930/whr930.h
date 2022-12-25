@@ -31,6 +31,7 @@ class Whr930 : public uart::UARTDevice, public Component {
   bool received_ack();
   bool process_response(uint8_t expected_response_byte, uint8_t *response_data_bytes);
   bool is_expected_byte(uint8_t expected_byte);
+  void clear_buffers();
 };
 
 }

@@ -26,13 +26,13 @@ bool Whr930::execute_command(
     return this->received_ack();
 }
 
+uint8_t command[20];
 void Whr930::send_command(
     uint8_t command_byte,
     uint8_t *data_bytes,
     size_t data_size)
 {
     uint8_t command_size = data_size + 8;
-    uint8_t command[command_size];
 
     // start bytes
     command[0] = 0x07;
@@ -61,8 +61,9 @@ void Whr930::send_command(
         ESP_LOGCONFIG(TAG, "  %d", command[i]);
     }
 
-    this->flush();
+    this->clear_buffers();
     this->write_array(command, command_size);
+    this->flush();
 }
 
 uint8_t Whr930::calculate_checksum(uint8_t *bytes, size_t len)
@@ -162,6 +163,17 @@ bool Whr930::is_expected_byte(uint8_t expected_byte)
     }
 
     return this->read_byte(&received_byte);
+}
+
+void Whr930::clear_buffers()
+{
+    this->flush();
+
+    int available = this->available();
+    if (available > 0) {
+        uint8_t discard_buffer[available] = {};
+        this->read_array(discard_buffer, available);
+    }
 }
 
 }
