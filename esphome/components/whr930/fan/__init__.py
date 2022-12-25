@@ -10,7 +10,7 @@ from .. import CONF_WHR930_ID, whr930_ns, Whr930
 
 CONF_FAN_TYPE = 'type'
 
-FanType = whr930_ns.enum("FanType", is_class=True)
+FanType = whr930_ns.enum("FanType")
 FAN_TYPE_ENUM = {
     "EXHAUST": FanType.EXHAUST,
     "SUPPLY": FanType.SUPPLY,
