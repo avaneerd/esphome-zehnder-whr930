@@ -14,6 +14,7 @@ FanType = whr930_ns.enum("FanType", is_class=True)
 FAN_TYPE_ENUM = {
     "EXHAUST": FanType.EXHAUST,
     "SUPPLY": FanType.SUPPLY,
+    "BOTH": FanType.BOTH,
 }
 
 Whr930Fan = whr930_ns.class_(

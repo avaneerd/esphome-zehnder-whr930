@@ -8,16 +8,19 @@
 namespace esphome {
 namespace whr930 {
 
-enum class FanType { EXHAUST = 0, SUPPLY = 1 };
+enum class FanType { EXHAUST = 1, SUPPLY = 2, BOTH = 3 };
+
+inline FanType operator&(FanType a, FanType b)
+{
+    return static_cast<FanType>(static_cast<int>(a) & static_cast<int>(b));
+}
 
 class Whr930Fan : public PollingComponent, public fan::Fan {
  public:
   Whr930Fan(Whr930 *whr930, FanType fan_type) :
     whr930_(whr930),
     fan_type_(&fan_type),
-    PollingComponent(60000) {
-      data_index = fan_type == FanType::EXHAUST ? 1 : 4;
-   }
+    PollingComponent(60000) { }
 
   const uint8_t get_command_byte = 0xCD;
   const uint8_t expected_response_byte = 0xCE;
@@ -25,12 +28,12 @@ class Whr930Fan : public PollingComponent, public fan::Fan {
   const uint8_t max_speed_level = 100;
   uint8_t response_bytes[13];
   uint8_t data_bytes[10] = { 15, 45, 75, 15, 45, 75, 100, 100, 1, 1 };
-  int data_index = 1;
 
   void update() override {
     if (this->whr930_->execute_request(get_command_byte, 0, 0, expected_response_byte, response_bytes)) {
+      int data_index = (*fan_type_ & FanType::EXHAUST) == FanType::EXHAUST ? 1 : 4;
       this->speed = response_bytes[data_index];
-      this->state = *this->fan_type_ == FanType::EXHAUST || response_bytes[9] == 1;
+      this->state = true;
       this->publish_state();
     }
   }
@@ -62,10 +65,10 @@ class Whr930Fan : public PollingComponent, public fan::Fan {
 
     this->speed = new_speed;
 
-    if (this->whr930_->execute_request(get_command_byte, 0, 0, expected_response_byte, response_bytes)) {
-      data_bytes[1] = response_bytes[1];
-      data_bytes[4] = response_bytes[4];
-      data_bytes[data_index] = this->speed;
+    if ((*fan_type_ & FanType::BOTH) == FanType::BOTH || this->whr930_->execute_request(get_command_byte, 0, 0, expected_response_byte, response_bytes)) {
+
+      data_bytes[1] = (*fan_type_ & FanType::EXHAUST) == FanType::EXHAUST ? this->speed : response_bytes[1];
+      data_bytes[4] = (*fan_type_ & FanType::SUPPLY) == FanType::SUPPLY ? this->speed : response_bytes[1];
       this->whr930_->execute_command(command_byte, data_bytes, 10);
     }
 

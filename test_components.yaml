@@ -23,3 +23,6 @@ fan:
 - platform: whr930
   name: "Exhaust fan"
   type: "EXHAUST"
+- platform: whr930
+  name: "fan"
+  type: "BOTH"
