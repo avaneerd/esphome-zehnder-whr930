@@ -47,7 +47,7 @@ class Whr930Fan : public PollingComponent, public fan::Fan {
       return;
     }
 
-    int new_speed = *call.get_speed();
+    int new_speed = *call.get_speed() + min_speed_level;
 
     if (new_speed < 45 || new_speed > 100) {
       return;
