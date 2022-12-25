@@ -24,7 +24,7 @@ class Whr930Fan : public PollingComponent, public fan::Fan {
     whr930_(whr930),
     PollingComponent(60000) {
       ESP_LOGCONFIG(TAG, "fan_type_: %d", fan_type);
-      ESP_LOGCONFIG(TAG, "fan_type_ == BOTH: %d", fan_type_ == FanType::BOTH);
+      ESP_LOGCONFIG(TAG, "fan_type_ == BOTH: %d", fan_type == FanType::BOTH);
       ESP_LOGCONFIG(TAG, "fan_type_ & EXHAUST: %d", fan_type & FanType::EXHAUST);
       ESP_LOGCONFIG(TAG, "fan_type_ & EXHAUST == EXHAUST: %d", fan_type & FanType::EXHAUST == FanType::EXHAUST);
       is_exhaust = fan_type & FanType::EXHAUST == FanType::EXHAUST;
