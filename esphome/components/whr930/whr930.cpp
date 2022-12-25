@@ -1,5 +1,4 @@
 #include "whr930.h"
-#include "esphome/core/log.h"
 
 namespace esphome {
 namespace whr930 {
@@ -55,11 +54,6 @@ void Whr930::send_command(
     // end bytes
     command[6 + data_size] = 0x07;
     command[7 + data_size] = 0x0F;
-
-    ESP_LOGCONFIG(TAG, "Sending command: ");
-    for (int i = 0; i < command_size; i++) {
-        ESP_LOGCONFIG(TAG, "  %d", command[i]);
-    }
 
     this->clear_buffers();
     this->write_array(command, command_size);
@@ -133,15 +127,8 @@ bool Whr930::process_response(
         return false;
     }
 
-    ESP_LOGCONFIG(TAG, "Got response: ");
-    for (int i = 0; i < 20; i++) {
-        ESP_LOGCONFIG(TAG, "  %d", response[i]);
-    }
-
-    ESP_LOGCONFIG(TAG, "Output data: ");
     for (int i = 0; i < data_size; i++) {
         *(response_data_bytes + i) = response[3 + i];
-        ESP_LOGCONFIG(TAG, "  %d", response[3 + i]);
     }
 
     return true;

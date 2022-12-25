@@ -3,6 +3,7 @@
 #include "esphome/core/component.h"
 #include "esphome/components/whr930/whr930.h"
 #include "esphome/components/fan/fan.h"
+#include "esphome/core/log.h"
 
 
 namespace esphome {
@@ -32,6 +33,16 @@ class Whr930Fan : public PollingComponent, public fan::Fan {
   void update() override {
     if (this->whr930_->execute_request(get_command_byte, 0, 0, expected_response_byte, response_bytes)) {
       int data_index = (*fan_type_ & FanType::EXHAUST) == FanType::EXHAUST ? 1 : 4;
+
+      ESP_LOGCONFIG(TAG, "fan_type_: %d", fan_type_);
+      ESP_LOGCONFIG(TAG, "*fan_type_: %d", *fan_type_);
+      ESP_LOGCONFIG(TAG, "*fan_type_: %d", FanType::EXHAUST);
+      ESP_LOGCONFIG(TAG, "*fan_type_: %d", (*fan_type_ & FanType::EXHAUST));
+      ESP_LOGCONFIG(TAG, "*fan_type_: %d", ((*fan_type_) & FanType::EXHAUST));
+      ESP_LOGCONFIG(TAG, "*fan_type_: %d", ((*fan_type_) & FanType::EXHAUST) == FanType::EXHAUST);
+      ESP_LOGCONFIG(TAG, "*fan_type_: %d", (*fan_type_ & FanType::EXHAUST) == FanType::EXHAUST);
+
+
       this->speed = response_bytes[data_index];
       this->state = true;
       this->publish_state();
@@ -66,7 +77,6 @@ class Whr930Fan : public PollingComponent, public fan::Fan {
     this->speed = new_speed;
 
     if ((*fan_type_ & FanType::BOTH) == FanType::BOTH || this->whr930_->execute_request(get_command_byte, 0, 0, expected_response_byte, response_bytes)) {
-
       data_bytes[1] = (*fan_type_ & FanType::EXHAUST) == FanType::EXHAUST ? this->speed : response_bytes[1];
       data_bytes[4] = (*fan_type_ & FanType::SUPPLY) == FanType::SUPPLY ? this->speed : response_bytes[1];
       this->whr930_->execute_command(command_byte, data_bytes, 10);
