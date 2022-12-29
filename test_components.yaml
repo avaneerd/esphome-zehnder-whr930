@@ -26,3 +26,8 @@ fan:
 - platform: whr930
   name: "fan"
   type: "BOTH"
+
+number:
+- platform: whr930
+  comfort_temperature:
+    name: "Comfort temperature"

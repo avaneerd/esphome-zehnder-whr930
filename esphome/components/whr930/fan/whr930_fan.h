@@ -8,8 +8,6 @@
 namespace esphome {
 namespace whr930 {
 
-static const char *const TAG = "whr930_fan";
-
 enum FanType { EXHAUST = 1, SUPPLY = 2, BOTH = 3 };
 
 inline FanType operator&(FanType a, FanType b)
