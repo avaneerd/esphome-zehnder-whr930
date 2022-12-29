@@ -57,14 +57,14 @@ async def to_code(config):
     if "t2_temperature" in config:
         conf = config["t2_temperature"]
         sens = await sensor.new_sensor(conf)
-        cg.add(var.set_t1_temperature_sensor(sens))
+        cg.add(var.set_t2_temperature_sensor(sens))
 
     if "t3_temperature" in config:
         conf = config["t3_temperature"]
         sens = await sensor.new_sensor(conf)
-        cg.add(var.set_t1_temperature_sensor(sens))
+        cg.add(var.set_t3_temperature_sensor(sens))
 
     if "t4_temperature" in config:
         conf = config["t4_temperature"]
         sens = await sensor.new_sensor(conf)
-        cg.add(var.set_t1_temperature_sensor(sens))
+        cg.add(var.set_t4_temperature_sensor(sens))
