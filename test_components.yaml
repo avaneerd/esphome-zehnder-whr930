@@ -31,3 +31,14 @@ number:
 - platform: whr930
   comfort_temperature:
     name: "Comfort temperature"
+
+sensor:
+- platform: whr930
+  t1_temperature:
+    name: "Outside to WHR930 temperature"
+  t2_temperature:
+    name: "WHR930 to insude temperature"
+  t3_temperature:
+    name: "Inside to WHR930 temperature"
+  t4_temperature:
+    name: "WHR930 to outside temperature"
