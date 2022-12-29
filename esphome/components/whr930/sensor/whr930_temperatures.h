@@ -26,16 +26,16 @@ class Whr930Temperatures : public PollingComponent {
   void update() override {
     if (this->whr930_->execute_request(get_command_byte, 0, 0, expected_response_byte, response_bytes)) {
       if (this->t1_temperature_sensor_ != nullptr)
-        this->t1_temperature_sensor_->publish_state(response_bytes[1] / 2 - 20);
+        this->t1_temperature_sensor_->publish_state(response_bytes[1] / 2. - 20);
 
       if (this->t2_temperature_sensor_ != nullptr)
-        this->t2_temperature_sensor_->publish_state(response_bytes[2] / 2 - 20);
+        this->t2_temperature_sensor_->publish_state(response_bytes[2] / 2. - 20);
 
       if (this->t3_temperature_sensor_ != nullptr)
-        this->t3_temperature_sensor_->publish_state(response_bytes[3] / 2 - 20);
+        this->t3_temperature_sensor_->publish_state(response_bytes[3] / 2. - 20);
 
       if (this->t4_temperature_sensor_ != nullptr)
-        this->t4_temperature_sensor_->publish_state(response_bytes[4] / 2 - 20);
+        this->t4_temperature_sensor_->publish_state(response_bytes[4] / 2. - 20);
     }
   }
 
