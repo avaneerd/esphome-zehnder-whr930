@@ -37,7 +37,7 @@ sensor:
   t1_temperature:
     name: "Outside to WHR930 temperature"
   t2_temperature:
-    name: "WHR930 to insude temperature"
+    name: "WHR930 to inside temperature"
   t3_temperature:
     name: "Inside to WHR930 temperature"
   t4_temperature:
