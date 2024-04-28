@@ -6,6 +6,7 @@ from esphome.const import (
     CONF_UNIT_OF_MEASUREMENT,
     UNIT_CELSIUS,
     CONF_ACCURACY_DECIMALS,
+    ENTITY_CATEGORY_CONFIG
 )
 
 from .. import CONF_WHR930_ID, whr930_ns, Whr930
@@ -20,10 +21,12 @@ CONFIG_SCHEMA = cv.All(
     {
         cv.GenerateID(CONF_WHR930_ID): cv.use_id(Whr930),
         cv.GenerateID(): cv.declare_id(Whr930ComfortTemperature),
-        cv.Required("comfort_temperature"): number.NUMBER_SCHEMA.extend(cv.COMPONENT_SCHEMA).extend(
-        {
-            cv.Optional(CONF_UNIT_OF_MEASUREMENT, default=UNIT_CELSIUS): cv.string_strict,
-            cv.Optional(CONF_ACCURACY_DECIMALS, default=0): cv.int_,
+        cv.Required("comfort_temperature"): number.number_schema(
+            Whr930ComfortTemperature,
+            unit_of_measurement=UNIT_CELSIUS,
+            entity_category=ENTITY_CATEGORY_CONFIG
+        ).extend({
+                cv.Optional(CONF_ACCURACY_DECIMALS, default=0): cv.int_
         })
     }
 )

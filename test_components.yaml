@@ -1,11 +1,8 @@
 esphome:
   name: whr930
 
-rp2040:
-  board: rpipicow
-  framework:
-    # Required until https://github.com/platformio/platform-raspberrypi/pull/36 is merged
-    platform_version: https://github.com/maxgerhardt/platform-raspberrypi.git
+esp8266:
+  board: d1_mini
 
 external_components:
   - source: esphome/components
