@@ -1,9 +1,6 @@
 import esphome.codegen as cg
 import esphome.config_validation as cv
 from esphome.components import fan
-from esphome.const import (
-    CONF_ID
-)
 
 from .. import CONF_WHR930_ID, whr930_ns, Whr930
 
@@ -23,9 +20,8 @@ Whr930Fan = whr930_ns.class_(
 AUTO_LOAD = ["whr930"]
 
 CONFIG_SCHEMA = cv.All(
-    fan.FAN_SCHEMA.extend(
+    fan.fan_schema(Whr930Fan).extend(
     {
-        cv.GenerateID(): cv.declare_id(Whr930Fan),
         cv.Required(CONF_FAN_TYPE): cv.enum(FAN_TYPE_ENUM, upper=True),
         cv.GenerateID(CONF_WHR930_ID): cv.use_id(Whr930)
     }
@@ -34,7 +30,5 @@ CONFIG_SCHEMA = cv.All(
 
 async def to_code(config):
     parent = await cg.get_variable(config[CONF_WHR930_ID])
-    id = config[CONF_ID]
-    var = cg.new_Pvariable(id, parent, config[CONF_FAN_TYPE])
+    var = await fan.new_fan(config, parent, config[CONF_FAN_TYPE])
     await cg.register_component(var, config)
-    await fan.register_fan(var, config)
