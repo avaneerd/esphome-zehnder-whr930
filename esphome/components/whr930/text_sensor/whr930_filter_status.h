@@ -16,17 +16,13 @@ class Whr930FilterStatus : public PollingComponent {
 
   void set_filter_status_sensor(text_sensor::TextSensor *sensor) { filter_status_sensor_ = sensor; }
 
-  const uint8_t get_faults_command = 0xD9;
-  const uint8_t faults_response = 0xDA;
-  uint8_t faults_response_bytes[17];
-
   void update() override {
     if (this->filter_status_sensor_ != nullptr) {
-      if (this->whr930_->execute_request(get_faults_command, 0, 0, faults_response, faults_response_bytes)) {
+      if (this->whr930_->execute_request(get_faults_command_, 0, 0, faults_response_, faults_response_bytes_)) {
         // Byte[8] = 0x00 = Filter OK, 0x01 = Filter full
-        if (faults_response_bytes[8] == 0x00) {
+        if (faults_response_bytes_[8] == 0x00) {
           this->filter_status_sensor_->publish_state("Ok");
-        } else if (faults_response_bytes[8] == 0x01) {
+        } else if (faults_response_bytes_[8] == 0x01) {
           this->filter_status_sensor_->publish_state("Full");
         } else {
           this->filter_status_sensor_->publish_state("Unknown");
@@ -38,6 +34,10 @@ class Whr930FilterStatus : public PollingComponent {
  protected:
   Whr930 *whr930_;
   text_sensor::TextSensor *filter_status_sensor_{nullptr};
+
+  const uint8_t get_faults_command_ = 0xD9;
+  const uint8_t faults_response_ = 0xDA;
+  uint8_t faults_response_bytes_[17];
 };
 
 }

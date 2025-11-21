@@ -15,10 +15,6 @@ Whr930Temperatures = whr930_ns.class_(
     "Whr930Temperatures", cg.PollingComponent
 )
 
-Whr930Status = whr930_ns.class_(
-    "Whr930Status", cg.PollingComponent
-)
-
 AUTO_LOAD = ["whr930"]
 
 CONFIG_SCHEMA = cv.All(
