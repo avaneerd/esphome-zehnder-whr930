@@ -11,8 +11,8 @@ namespace whr930 {
 class Whr930FilterStatus : public PollingComponent {
  public:
   Whr930FilterStatus(Whr930 *whr930) :
-    whr930_(whr930),
-    PollingComponent(60000) { }
+    PollingComponent(60000),
+    whr930_(whr930) { }
 
   void set_filter_status_sensor(text_sensor::TextSensor *sensor) { filter_status_sensor_ = sensor; }
 
@@ -37,7 +37,7 @@ class Whr930FilterStatus : public PollingComponent {
 
   const uint8_t get_faults_command_ = 0xD9;
   const uint8_t faults_response_ = 0xDA;
-  uint8_t faults_response_bytes_[17];
+  uint8_t faults_response_bytes_[17];  // Faults response: 17 data bytes (errors + filter status)
 };
 
 }

@@ -11,8 +11,8 @@ namespace whr930 {
 class Whr930Temperatures : public PollingComponent {
  public:
   Whr930Temperatures(Whr930 *whr930) :
-    whr930_(whr930),
-    PollingComponent(60000) { }
+    PollingComponent(60000),
+    whr930_(whr930) { }
 
   void set_t1_temperature_sensor(sensor::Sensor *temperature_sensor) { t1_temperature_sensor_ = temperature_sensor; }
   void set_t2_temperature_sensor(sensor::Sensor *temperature_sensor) { t2_temperature_sensor_ = temperature_sensor; }
@@ -61,11 +61,11 @@ class Whr930Temperatures : public PollingComponent {
 
   const uint8_t get_command_byte_ = 0xD1;
   const uint8_t expected_response_byte_ = 0xD2;
-  uint8_t response_bytes_[13];
+  uint8_t response_bytes_[13];  // Temperature response: 9 data bytes + metadata
 
   const uint8_t get_valve_command_ = 0x0D;
   const uint8_t valve_response_ = 0x0E;
-  uint8_t valve_response_bytes_[4];
+  uint8_t valve_response_bytes_[4];  // Valve status response: 4 data bytes
 };
 
 }
