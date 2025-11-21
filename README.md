@@ -6,6 +6,8 @@ An [ESPHome](https://esphome.io/) external component for integrating the Zehnder
 
 - Control supply fan, exhaust fan, or both
 - Read temperature sensors (T1-T4)
+- Monitor bypass valve position
+- Check filter status
 - Adjust comfort temperature
 
 ## Installation
@@ -47,6 +49,13 @@ sensor:
       name: "Return Temperature"
     t4_temperature:
       name: "Exhaust Temperature"
+    bypass_position:
+      name: "Bypass Position"
+
+text_sensor:
+  - platform: whr930
+    filter_status:
+      name: "Filter Status"
 
 number:
   - platform: whr930
