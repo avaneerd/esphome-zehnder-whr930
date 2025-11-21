@@ -5,7 +5,7 @@ An [ESPHome](https://esphome.io/) external component for integrating the Zehnder
 ## What it does
 
 - Control supply fan, exhaust fan, or both
-- Read temperature sensors (T1-T4)  
+- Read temperature sensors (T1-T4)
 - Adjust comfort temperature
 
 ## Installation
