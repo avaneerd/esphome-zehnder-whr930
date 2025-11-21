@@ -4,6 +4,7 @@ from esphome.components import sensor
 from esphome.const import (
     CONF_ID,
     UNIT_CELSIUS,
+    UNIT_PERCENT,
     DEVICE_CLASS_TEMPERATURE,
     STATE_CLASS_MEASUREMENT
 )
@@ -12,6 +13,10 @@ from .. import CONF_WHR930_ID, whr930_ns, Whr930
 
 Whr930Temperatures = whr930_ns.class_(
     "Whr930Temperatures", cg.PollingComponent
+)
+
+Whr930Status = whr930_ns.class_(
+    "Whr930Status", cg.PollingComponent
 )
 
 AUTO_LOAD = ["whr930"]
@@ -40,6 +45,10 @@ CONFIG_SCHEMA = cv.All(
             device_class=DEVICE_CLASS_TEMPERATURE,
             state_class=STATE_CLASS_MEASUREMENT,
             accuracy_decimals=1).extend(cv.COMPONENT_SCHEMA),
+        cv.Optional("bypass_position"): sensor.sensor_schema(
+            unit_of_measurement=UNIT_PERCENT,
+            state_class=STATE_CLASS_MEASUREMENT,
+            accuracy_decimals=0).extend(cv.COMPONENT_SCHEMA),
     }
 )
 
@@ -68,3 +77,8 @@ async def to_code(config):
         conf = config["t4_temperature"]
         sens = await sensor.new_sensor(conf)
         cg.add(var.set_t4_temperature_sensor(sens))
+
+    if "bypass_position" in config:
+        conf = config["bypass_position"]
+        sens = await sensor.new_sensor(conf)
+        cg.add(var.set_bypass_position_sensor(sens))
