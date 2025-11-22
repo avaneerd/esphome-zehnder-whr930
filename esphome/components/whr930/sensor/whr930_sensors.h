@@ -8,9 +8,9 @@
 namespace esphome {
 namespace whr930 {
 
-class Whr930Temperatures : public PollingComponent {
+class Whr930Sensors : public PollingComponent {
  public:
-  Whr930Temperatures(Whr930 *whr930) :
+  Whr930Sensors(Whr930 *whr930) :
     PollingComponent(60000),
     whr930_(whr930) { }
 

@@ -11,8 +11,8 @@ from esphome.const import (
 
 from .. import CONF_WHR930_ID, whr930_ns, Whr930
 
-Whr930Temperatures = whr930_ns.class_(
-    "Whr930Temperatures", cg.PollingComponent
+Whr930Sensors = whr930_ns.class_(
+    "Whr930Sensors", cg.PollingComponent
 )
 
 AUTO_LOAD = ["whr930"]
@@ -20,7 +20,7 @@ AUTO_LOAD = ["whr930"]
 CONFIG_SCHEMA = cv.All(
     {
         cv.GenerateID(CONF_WHR930_ID): cv.use_id(Whr930),
-        cv.GenerateID(): cv.declare_id(Whr930Temperatures),
+        cv.GenerateID(): cv.declare_id(Whr930Sensors),
         cv.Optional("t1_temperature"): sensor.sensor_schema(
             unit_of_measurement=UNIT_CELSIUS,
             device_class=DEVICE_CLASS_TEMPERATURE,
