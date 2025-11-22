@@ -39,3 +39,10 @@ sensor:
     name: "Inside to WHR930 temperature"
   t4_temperature:
     name: "WHR930 to outside temperature"
+  bypass_position:
+    name: "Bypass position"
+
+text_sensor:
+- platform: whr930
+  filter_status:
+    name: "Filter status"
