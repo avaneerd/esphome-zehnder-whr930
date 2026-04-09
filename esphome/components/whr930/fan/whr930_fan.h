@@ -21,8 +21,8 @@ inline FanType operator&(FanType a, FanType b)
 class Whr930Fan : public PollingComponent, public fan::Fan {
  public:
   Whr930Fan(Whr930 *whr930, FanType fan_type) :
-    whr930_(whr930),
-    PollingComponent(60000) {
+    PollingComponent(60000),
+    whr930_(whr930) {
       is_exhaust = (fan_type & FanType::EXHAUST) == FanType::EXHAUST;
       is_supply = (fan_type & FanType::SUPPLY) == FanType::SUPPLY;
      }

@@ -14,8 +14,8 @@ static const char *NUMBER_TAG = "whr930.number";
 class Whr930ComfortTemperature : public PollingComponent, public number::Number {
  public:
   Whr930ComfortTemperature(Whr930 *whr930) :
-    whr930_(whr930),
-    PollingComponent(60000) { }
+    PollingComponent(60000),
+    whr930_(whr930) { }
 
   const uint8_t get_command_byte = 0xD1;
   const uint8_t expected_response_byte = 0xD2;
