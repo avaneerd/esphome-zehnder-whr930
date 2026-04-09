@@ -1,12 +1,15 @@
 #pragma once
 
 #include "esphome/core/component.h"
+#include "esphome/core/log.h"
 #include "esphome/components/whr930/whr930.h"
 #include "esphome/components/fan/fan.h"
 
 
 namespace esphome {
 namespace whr930 {
+
+static const char *FAN_TAG = "whr930.fan";
 
 enum FanType { EXHAUST = 1, SUPPLY = 2, BOTH = 3 };
 
@@ -20,8 +23,8 @@ class Whr930Fan : public PollingComponent, public fan::Fan {
   Whr930Fan(Whr930 *whr930, FanType fan_type) :
     whr930_(whr930),
     PollingComponent(60000) {
-      is_exhaust = fan_type & FanType::EXHAUST == FanType::EXHAUST;
-      is_supply = fan_type & FanType::SUPPLY == FanType::SUPPLY;
+      is_exhaust = (fan_type & FanType::EXHAUST) == FanType::EXHAUST;
+      is_supply = (fan_type & FanType::SUPPLY) == FanType::SUPPLY;
      }
 
   const uint8_t get_command_byte = 0xCD;
@@ -41,6 +44,8 @@ class Whr930Fan : public PollingComponent, public fan::Fan {
       this->speed = response_bytes[data_index];
       this->state = true;
       this->publish_state();
+    } else {
+      ESP_LOGW(FAN_TAG, "Failed to read fan speed");
     }
   }
 
@@ -73,7 +78,11 @@ class Whr930Fan : public PollingComponent, public fan::Fan {
     if ((is_exhaust && is_supply) || this->whr930_->execute_request(get_command_byte, 0, 0, expected_response_byte, response_bytes)) {
       data_bytes[exhaust_data_index] = is_exhaust ? this->speed : response_bytes[exhaust_data_index];
       data_bytes[supply_data_index] = is_supply ? this->speed : response_bytes[supply_data_index];
-      this->whr930_->execute_command(command_byte, data_bytes, 10);
+      if (!this->whr930_->execute_command(command_byte, data_bytes, 10)) {
+        ESP_LOGW(FAN_TAG, "Failed to set fan speed to %d", new_speed);
+      }
+    } else {
+      ESP_LOGW(FAN_TAG, "Failed to read current fan speeds before setting new speed");
     }
 
     this->publish_state();

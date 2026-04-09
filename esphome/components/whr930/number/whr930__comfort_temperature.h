@@ -1,12 +1,15 @@
 #pragma once
 
 #include "esphome/core/component.h"
+#include "esphome/core/log.h"
 #include "esphome/components/whr930/whr930.h"
 #include "esphome/components/number/number.h"
 
 
 namespace esphome {
 namespace whr930 {
+
+static const char *NUMBER_TAG = "whr930.number";
 
 class Whr930ComfortTemperature : public PollingComponent, public number::Number {
  public:
@@ -25,6 +28,8 @@ class Whr930ComfortTemperature : public PollingComponent, public number::Number 
     if (this->whr930_->execute_request(get_command_byte, 0, 0, expected_response_byte, response_bytes)) {
       this->state = response_bytes[0] / 2 - 20;
       this->publish_state(this->state);
+    } else {
+      ESP_LOGW(NUMBER_TAG, "Failed to read comfort temperature");
     }
   }
 
@@ -45,6 +50,7 @@ class Whr930ComfortTemperature : public PollingComponent, public number::Number 
 
     data_bytes[0] = (temperature + 20) * 2;
     if (!this->whr930_->execute_command(command_byte, data_bytes, 1)) {
+      ESP_LOGW(NUMBER_TAG, "Failed to set comfort temperature to %.0f", temperature);
       return;
     }
 

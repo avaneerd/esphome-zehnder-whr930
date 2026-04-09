@@ -1,7 +1,11 @@
 #include "whr930.h"
+#include "esphome/core/log.h"
+#include <algorithm>
 
 namespace esphome {
 namespace whr930 {
+
+static const char *TAG = "whr930";
 
 bool Whr930::execute_request(
     uint8_t command_byte,
@@ -11,7 +15,16 @@ bool Whr930::execute_request(
     uint8_t *response_data_bytes)
 {
     this->send_command(command_byte, data_bytes, data_size);
-    return this->received_ack() && this->process_response(expected_response_byte, response_data_bytes);
+    if (!this->received_ack()) {
+        ESP_LOGW(TAG, "No ACK received for request command 0x%02X", command_byte);
+        return false;
+    }
+    if (!this->process_response(expected_response_byte, response_data_bytes)) {
+        ESP_LOGW(TAG, "Failed to process response for command 0x%02X", command_byte);
+        return false;
+    }
+    ESP_LOGD(TAG, "Request command 0x%02X completed successfully", command_byte);
+    return true;
 }
 
 bool Whr930::execute_command(
@@ -20,7 +33,12 @@ bool Whr930::execute_command(
     size_t data_size)
 {
     this->send_command(command_byte, data_bytes, data_size);
-    return this->received_ack();
+    if (!this->received_ack()) {
+        ESP_LOGW(TAG, "No ACK received for write command 0x%02X", command_byte);
+        return false;
+    }
+    ESP_LOGD(TAG, "Write command 0x%02X completed successfully", command_byte);
+    return true;
 }
 
 uint8_t command[20];
@@ -56,6 +74,7 @@ void Whr930::send_command(
     this->clear_buffers();
     this->write_array(command, command_size);
     this->flush();
+    ESP_LOGD(TAG, "Sent command 0x%02X with %u data bytes", command_byte, data_size);
 }
 
 uint8_t Whr930::calculate_checksum(uint8_t *bytes, size_t len)
@@ -108,6 +127,10 @@ bool Whr930::process_response(
         return false;
     }
     uint8_t data_size = response[2];
+    if (data_size > 17) {
+        ESP_LOGE(TAG, "Response data_size %u exceeds buffer capacity", data_size);
+        return false;
+    }
 
     // read data
     if (data_size > 0 && !this->read_array(&response[3], data_size)) {
@@ -134,16 +157,20 @@ bool Whr930::process_response(
 
 bool Whr930::is_expected_byte(uint8_t expected_byte)
 {
-    uint32_t wait_count = 0;
-    uint32_t max_wait_count = 1000;
-    while (this->available() < 1 && ++wait_count < max_wait_count) {}
-
-    if (this->available() < 1) {
-        return false;
+    uint32_t start = millis();
+    uint32_t timeout_ms = 150;
+    while (this->available() < 1) {
+        if (millis() - start >= timeout_ms) {
+            ESP_LOGW(TAG, "Timeout waiting for byte 0x%02X", expected_byte);
+            return false;
+        }
+        yield();
     }
 
     uint8_t received_byte;
     if (!this->peek_byte(&received_byte) || received_byte != expected_byte) {
+        this->read_byte(&received_byte);
+        ESP_LOGW(TAG, "Expected 0x%02X, got 0x%02X", expected_byte, received_byte);
         return false;
     }
 
@@ -154,10 +181,17 @@ void Whr930::clear_buffers()
 {
     this->flush();
 
-    int available = this->available();
-    if (available > 0) {
-        uint8_t discard_buffer[available] = {};
-        this->read_array(discard_buffer, available);
+    int avail = this->available();
+    if (avail > 0) {
+        ESP_LOGD(TAG, "Clearing %d stale bytes from RX buffer", avail);
+        uint8_t buf[64];
+        while (avail > 0) {
+            size_t to_read = std::min(static_cast<size_t>(avail), sizeof(buf));
+            if (!this->read_array(buf, to_read)) {
+                break;
+            }
+            avail -= to_read;
+        }
     }
 }
 

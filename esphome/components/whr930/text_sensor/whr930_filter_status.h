@@ -1,12 +1,15 @@
 #pragma once
 
 #include "esphome/core/component.h"
+#include "esphome/core/log.h"
 #include "esphome/components/whr930/whr930.h"
 #include "esphome/components/text_sensor/text_sensor.h"
 
 
 namespace esphome {
 namespace whr930 {
+
+static const char *FILTER_TAG = "whr930.filter";
 
 class Whr930FilterStatus : public PollingComponent {
  public:
@@ -27,6 +30,8 @@ class Whr930FilterStatus : public PollingComponent {
         } else {
           this->filter_status_sensor_->publish_state("Unknown");
         }
+      } else {
+        ESP_LOGW(FILTER_TAG, "Failed to read filter status");
       }
     }
   }

@@ -1,12 +1,15 @@
 #pragma once
 
 #include "esphome/core/component.h"
+#include "esphome/core/log.h"
 #include "esphome/components/whr930/whr930.h"
 #include "esphome/components/sensor/sensor.h"
 
 
 namespace esphome {
 namespace whr930 {
+
+static const char *SENSOR_TAG = "whr930.sensor";
 
 class Whr930Sensors : public PollingComponent {
  public:
@@ -38,6 +41,8 @@ class Whr930Sensors : public PollingComponent {
       if (this->t4_temperature_sensor_ != nullptr) {
         this->t4_temperature_sensor_->publish_state(response_bytes_[4] / 2. - 20);
       }
+    } else {
+      ESP_LOGW(SENSOR_TAG, "Failed to read temperatures");
     }
 
     // Get bypass position from valve status command
@@ -47,6 +52,8 @@ class Whr930Sensors : public PollingComponent {
         if (valve_response_bytes_[0] != 0xFF) {
           this->bypass_position_sensor_->publish_state(valve_response_bytes_[0]);
         }
+      } else {
+        ESP_LOGW(SENSOR_TAG, "Failed to read bypass valve position");
       }
     }
   }
