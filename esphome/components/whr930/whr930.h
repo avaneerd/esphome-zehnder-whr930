@@ -8,6 +8,10 @@ namespace whr930 {
 
 class Whr930 : public uart::UARTDevice, public Component {
  public:
+    void setup() override;
+    void on_shutdown() override;
+    float get_setup_priority() const override { return setup_priority::LATE; }
+
     bool execute_request(
     uint8_t command_byte,
     uint8_t *data_bytes,

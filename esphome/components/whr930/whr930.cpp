@@ -7,6 +7,27 @@ namespace whr930 {
 
 static const char *TAG = "whr930";
 
+void Whr930::setup() {
+    // Set RS232 mode to "PC Master" (0x03) to claim the bus
+    // This prevents collisions with the CC-Ease panel on the shared RS232 bus
+    uint8_t mode = 0x03;  // PC Master
+    if (this->execute_command(0x9B, &mode, 1)) {
+        ESP_LOGI(TAG, "RS232 mode set to PC Master (0x03)");
+    } else {
+        ESP_LOGE(TAG, "Failed to set RS232 mode - bus collisions may occur");
+    }
+}
+
+void Whr930::on_shutdown() {
+    // Release RS232 bus by setting mode to "End" (0x00)
+    uint8_t mode = 0x00;  // End / release
+    if (this->execute_command(0x9B, &mode, 1)) {
+        ESP_LOGI(TAG, "RS232 mode released (0x00)");
+    } else {
+        ESP_LOGW(TAG, "Failed to release RS232 mode");
+    }
+}
+
 bool Whr930::execute_request(
     uint8_t command_byte,
     uint8_t *data_bytes,
@@ -114,7 +135,7 @@ bool Whr930::process_response(
     }
 
     // check for command
-    uint8_t response[20];
+    uint8_t response[24];  // 3 header bytes + up to 20 data bytes + 1 checksum
     response[0] = 0x00;
     response[1] = expected_response_byte;
     if (!this->is_expected_byte(response[0]) || !this->is_expected_byte(response[1])) {
@@ -126,7 +147,7 @@ bool Whr930::process_response(
         return false;
     }
     uint8_t data_size = response[2];
-    if (data_size > 17) {
+    if (data_size > 20) {
         ESP_LOGE(TAG, "Response data_size %u exceeds buffer capacity", data_size);
         return false;
     }

@@ -31,16 +31,21 @@ class Whr930Fan : public PollingComponent, public fan::Fan {
   const uint8_t expected_response_byte = 0xCE;
   const uint8_t min_speed_level = 45;
   const uint8_t max_speed_level = 100;
-  const uint8_t exhaust_data_index = 1;
-  const uint8_t supply_data_index = 4;
+  // Read indices for current running speed (from 0xCE response, 14 data bytes)
+  const uint8_t exhaust_current_index = 7;
+  const uint8_t supply_current_index = 8;
+  // Write indices for configured level (for 0xCF write command, maps to "low" preset)
+  const uint8_t exhaust_write_index = 1;
+  const uint8_t supply_write_index = 4;
   bool is_exhaust;
   bool is_supply;
-  uint8_t response_bytes[13];
-  uint8_t data_bytes[10] = { 15, 45, 75, 15, 45, 75, 100, 100, 1, 1 };
+  uint8_t response_bytes[14];  // 0xCE returns 14 data bytes
+  uint8_t data_bytes[9] = { 15, 45, 75, 15, 45, 75, 100, 100, 0 };  // 0xCF takes 9 data bytes
 
   void update() override {
     if (this->whr930_->execute_request(get_command_byte, 0, 0, expected_response_byte, response_bytes)) {
-      int data_index = is_exhaust ? exhaust_data_index : supply_data_index;
+      // Read current running speed (not configured level)
+      int data_index = is_exhaust ? exhaust_current_index : supply_current_index;
       this->speed = response_bytes[data_index];
       this->state = true;
       this->publish_state();
@@ -76,9 +81,16 @@ class Whr930Fan : public PollingComponent, public fan::Fan {
     this->speed = new_speed;
 
     if ((is_exhaust && is_supply) || this->whr930_->execute_request(get_command_byte, 0, 0, expected_response_byte, response_bytes)) {
-      data_bytes[exhaust_data_index] = is_exhaust ? this->speed : response_bytes[exhaust_data_index];
-      data_bytes[supply_data_index] = is_supply ? this->speed : response_bytes[supply_data_index];
-      if (!this->whr930_->execute_command(command_byte, data_bytes, 10)) {
+      // Copy current configured levels from response into write buffer (indices 0-6 match)
+      if (!(is_exhaust && is_supply)) {
+        for (int i = 0; i < 7; i++) {
+          data_bytes[i] = response_bytes[i];
+        }
+      }
+      // Set the target speed in the "low" preset slot
+      if (is_exhaust) data_bytes[exhaust_write_index] = this->speed;
+      if (is_supply) data_bytes[supply_write_index] = this->speed;
+      if (!this->whr930_->execute_command(command_byte, data_bytes, 9)) {
         ESP_LOGW(FAN_TAG, "Failed to set fan speed to %d", new_speed);
       }
     } else {

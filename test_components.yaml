@@ -44,8 +44,29 @@ sensor:
     name: "WHR930 to outside temperature"
   bypass_position:
     name: "Bypass position"
+  supply_fan_speed:
+    name: "Supply fan speed"
+  exhaust_fan_speed:
+    name: "Exhaust fan speed"
+  supply_fan_rpm:
+    name: "Supply fan RPM"
+  exhaust_fan_rpm:
+    name: "Exhaust fan RPM"
+  filter_hours:
+    name: "Filter hours"
 
 text_sensor:
 - platform: whr930
   filter_status:
     name: "Filter status"
+  error_a:
+    name: "Error A"
+  error_e:
+    name: "Error E"
+  error_ea:
+    name: "Error EA"
+
+select:
+- platform: whr930
+  ventilation_level:
+    name: "Ventilation level"
