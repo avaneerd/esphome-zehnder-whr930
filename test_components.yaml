@@ -13,6 +13,9 @@ uart:
   rx_pin: GPIO1
   baud_rate: 9600
 
+whr930:
+  uart_id: uart_bus
+
 fan:
 - platform: whr930
   name: "Supply fan"

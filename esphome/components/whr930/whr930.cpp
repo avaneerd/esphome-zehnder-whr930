@@ -41,7 +41,6 @@ bool Whr930::execute_command(
     return true;
 }
 
-uint8_t command[20];
 void Whr930::send_command(
     uint8_t command_byte,
     uint8_t *data_bytes,
@@ -50,29 +49,29 @@ void Whr930::send_command(
     uint8_t command_size = data_size + 8;
 
     // start bytes
-    command[0] = 0x07;
-    command[1] = 0xF0;
+    this->command_buffer_[0] = 0x07;
+    this->command_buffer_[1] = 0xF0;
 
     // command bytes
-    command[2] = 0x00;
-    command[3] = command_byte;
+    this->command_buffer_[2] = 0x00;
+    this->command_buffer_[3] = command_byte;
 
     // data
-    command[4] = (uint8_t)data_size;
+    this->command_buffer_[4] = (uint8_t)data_size;
 
     for (int i = 0; i < data_size; i++) {
-        command[5 + i] = *(data_bytes + i);
+        this->command_buffer_[5 + i] = *(data_bytes + i);
     }
 
     // checksum
-    command[5 + data_size] = this->calculate_checksum(&command[2], 3 + data_size);
+    this->command_buffer_[5 + data_size] = this->calculate_checksum(&this->command_buffer_[2], 3 + data_size);
 
     // end bytes
-    command[6 + data_size] = 0x07;
-    command[7 + data_size] = 0x0F;
+    this->command_buffer_[6 + data_size] = 0x07;
+    this->command_buffer_[7 + data_size] = 0x0F;
 
     this->clear_buffers();
-    this->write_array(command, command_size);
+    this->write_array(this->command_buffer_, command_size);
     this->flush();
     ESP_LOGD(TAG, "Sent command 0x%02X with %u data bytes", command_byte, data_size);
 }

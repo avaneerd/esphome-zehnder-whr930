@@ -8,8 +8,6 @@ namespace whr930 {
 
 class Whr930 : public uart::UARTDevice, public Component {
  public:
-  Whr930(uart::UARTComponent *uart) : uart::UARTDevice(uart) { }
-
     bool execute_request(
     uint8_t command_byte,
     uint8_t *data_bytes,
@@ -32,6 +30,8 @@ class Whr930 : public uart::UARTDevice, public Component {
   bool process_response(uint8_t expected_response_byte, uint8_t *response_data_bytes);
   bool is_expected_byte(uint8_t expected_byte);
   void clear_buffers();
+
+  uint8_t command_buffer_[20];
 };
 
 }

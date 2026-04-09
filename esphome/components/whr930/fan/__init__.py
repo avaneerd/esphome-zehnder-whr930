@@ -4,7 +4,9 @@ from esphome.components import fan
 
 from .. import CONF_WHR930_ID, whr930_ns, Whr930
 
-CONF_FAN_TYPE = 'type'
+DEPENDENCIES = ["whr930"]
+
+CONF_FAN_TYPE = "type"
 
 FanType = whr930_ns.enum("FanType")
 FAN_TYPE_ENUM = {
@@ -17,13 +19,11 @@ Whr930Fan = whr930_ns.class_(
     "Whr930Fan", cg.PollingComponent, fan.Fan
 )
 
-AUTO_LOAD = ["whr930"]
-
 CONFIG_SCHEMA = cv.All(
     fan.fan_schema(Whr930Fan).extend(
     {
         cv.Required(CONF_FAN_TYPE): cv.enum(FAN_TYPE_ENUM, upper=True),
-        cv.GenerateID(CONF_WHR930_ID): cv.use_id(Whr930)
+        cv.GenerateID(CONF_WHR930_ID): cv.use_id(Whr930),
     }
     ).extend(cv.COMPONENT_SCHEMA)
 )
