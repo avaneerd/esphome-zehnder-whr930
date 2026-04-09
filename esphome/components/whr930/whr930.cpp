@@ -28,6 +28,11 @@ void Whr930::on_shutdown() {
     }
 }
 
+void Whr930::dump_config() {
+    ESP_LOGCONFIG(TAG, "Zehnder WHR930:");
+    ESP_LOGCONFIG(TAG, "  RS232 mode: PC Master (0x03)");
+}
+
 bool Whr930::execute_request(
     uint8_t command_byte,
     uint8_t *data_bytes,
@@ -38,12 +43,16 @@ bool Whr930::execute_request(
     this->send_command(command_byte, data_bytes, data_size);
     if (!this->received_ack()) {
         ESP_LOGW(TAG, "No ACK received for request command 0x%02X", command_byte);
+        this->clear_buffers();
         return false;
     }
     if (!this->process_response(expected_response_byte, response_data_bytes)) {
         ESP_LOGW(TAG, "Failed to process response for command 0x%02X", command_byte);
+        this->clear_buffers();
         return false;
     }
+    // Send ACK back to the WHR930 to confirm we received the response
+    this->send_ack_();
     ESP_LOGD(TAG, "Request command 0x%02X completed successfully", command_byte);
     return true;
 }
@@ -56,6 +65,7 @@ bool Whr930::execute_command(
     this->send_command(command_byte, data_bytes, data_size);
     if (!this->received_ack()) {
         ESP_LOGW(TAG, "No ACK received for write command 0x%02X", command_byte);
+        this->clear_buffers();
         return false;
     }
     ESP_LOGD(TAG, "Write command 0x%02X completed successfully", command_byte);
@@ -67,6 +77,12 @@ void Whr930::send_command(
     uint8_t *data_bytes,
     size_t data_size)
 {
+    if (data_size > sizeof(command_buffer_) - 8) {
+        ESP_LOGE(TAG, "Command data_size %u exceeds buffer capacity (%u max)",
+                 data_size, sizeof(command_buffer_) - 8);
+        return;
+    }
+
     uint8_t command_size = data_size + 8;
 
     // start bytes
@@ -100,7 +116,7 @@ void Whr930::send_command(
 uint8_t Whr930::calculate_checksum(uint8_t *bytes, size_t len)
 {
     uint8_t checksum = 0xAD;
-    uint8_t index = 0;
+    size_t index = 0;
     bool stop_byte_already_processed = false;
 
     do {
@@ -124,6 +140,13 @@ uint8_t Whr930::calculate_checksum(uint8_t *bytes, size_t len)
 bool Whr930::received_ack()
 {
     return this->is_expected_byte(0x07) && this->is_expected_byte(0xF3);
+}
+
+void Whr930::send_ack_()
+{
+    uint8_t ack[] = {0x07, 0xF3};
+    this->write_array(ack, sizeof(ack));
+    this->flush();
 }
 
 bool Whr930::process_response(

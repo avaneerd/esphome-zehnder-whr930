@@ -8,12 +8,12 @@
 namespace esphome {
 namespace whr930 {
 
-static const char *SELECT_TAG = "whr930.select";
+static constexpr const char *SELECT_TAG = "whr930.select";
 
 class Whr930VentilationLevel : public PollingComponent, public select::Select {
  public:
   Whr930VentilationLevel(Whr930 *whr930) :
-    PollingComponent(60000),
+    PollingComponent(68000),  // Staggered: select=68s
     whr930_(whr930) {
       this->traits.set_options({"Auto", "Absent", "Low", "Medium", "High"});
     }
@@ -31,6 +31,11 @@ class Whr930VentilationLevel : public PollingComponent, public select::Select {
     } else {
       ESP_LOGW(SELECT_TAG, "Failed to read current ventilation level");
     }
+  }
+
+  void dump_config() override {
+    ESP_LOGCONFIG(SELECT_TAG, "WHR930 Ventilation Level:");
+    ESP_LOGCONFIG(SELECT_TAG, "  Options: Auto, Absent, Low, Medium, High");
   }
 
  protected:

@@ -10,18 +10,26 @@
 namespace esphome {
 namespace whr930 {
 
-static const char *FILTER_TAG = "whr930.filter";
+static constexpr const char *FILTER_TAG = "whr930.filter";
 
 class Whr930FilterStatus : public PollingComponent {
  public:
   Whr930FilterStatus(Whr930 *whr930) :
-    PollingComponent(60000),
+    PollingComponent(64000),  // Staggered: text_sensor=64s
     whr930_(whr930) { }
 
   void set_filter_status_sensor(text_sensor::TextSensor *sensor) { filter_status_sensor_ = sensor; }
   void set_error_a_sensor(text_sensor::TextSensor *sensor) { error_a_sensor_ = sensor; }
   void set_error_e_sensor(text_sensor::TextSensor *sensor) { error_e_sensor_ = sensor; }
   void set_error_ea_sensor(text_sensor::TextSensor *sensor) { error_ea_sensor_ = sensor; }
+
+  void dump_config() override {
+    ESP_LOGCONFIG(FILTER_TAG, "WHR930 Filter/Faults:");
+    ESP_LOGCONFIG(FILTER_TAG, "  Filter Status: %s", this->filter_status_sensor_ ? "configured" : "disabled");
+    ESP_LOGCONFIG(FILTER_TAG, "  Error A: %s", this->error_a_sensor_ ? "configured" : "disabled");
+    ESP_LOGCONFIG(FILTER_TAG, "  Error E: %s", this->error_e_sensor_ ? "configured" : "disabled");
+    ESP_LOGCONFIG(FILTER_TAG, "  Error EA: %s", this->error_ea_sensor_ ? "configured" : "disabled");
+  }
 
   void update() override {
     if (this->whr930_->execute_request(get_faults_command_, 0, 0, faults_response_, faults_response_bytes_)) {

@@ -9,24 +9,29 @@
 namespace esphome {
 namespace whr930 {
 
-static const char *NUMBER_TAG = "whr930.number";
+static constexpr const char *NUMBER_TAG = "whr930.number";
 
 class Whr930ComfortTemperature : public PollingComponent, public number::Number {
  public:
   Whr930ComfortTemperature(Whr930 *whr930) :
-    PollingComponent(60000),
+    PollingComponent(66000),  // Staggered: number=66s
     whr930_(whr930) { }
+
+  void dump_config() override {
+    ESP_LOGCONFIG(NUMBER_TAG, "WHR930 Comfort Temperature:");
+    ESP_LOGCONFIG(NUMBER_TAG, "  Range: %d - %d C", min_temperature, max_temperature);
+  }
 
   const uint8_t get_command_byte = 0xD1;
   const uint8_t expected_response_byte = 0xD2;
   const uint8_t min_temperature = 15;
   const uint8_t max_temperature = 25;
-  uint8_t response_bytes[13];
+  uint8_t response_bytes[9];  // Temperature response: 9 data bytes
   uint8_t data_bytes[8] = {};
 
   void update() override {
     if (this->whr930_->execute_request(get_command_byte, 0, 0, expected_response_byte, response_bytes)) {
-      this->state = response_bytes[0] / 2 - 20;
+      this->state = response_bytes[0] / 2.0 - 20;
       this->publish_state(this->state);
     } else {
       ESP_LOGW(NUMBER_TAG, "Failed to read comfort temperature");

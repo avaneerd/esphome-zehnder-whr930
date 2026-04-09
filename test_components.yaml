@@ -70,3 +70,8 @@ select:
 - platform: whr930
   ventilation_level:
     name: "Ventilation level"
+
+button:
+- platform: whr930
+  reset_filter:
+    name: "Reset filter"

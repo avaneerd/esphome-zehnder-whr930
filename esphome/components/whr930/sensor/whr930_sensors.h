@@ -9,12 +9,12 @@
 namespace esphome {
 namespace whr930 {
 
-static const char *SENSOR_TAG = "whr930.sensor";
+static constexpr const char *SENSOR_TAG = "whr930.sensor";
 
 class Whr930Sensors : public PollingComponent {
  public:
   Whr930Sensors(Whr930 *whr930) :
-    PollingComponent(60000),
+    PollingComponent(62000),  // Staggered: sensor=62s
     whr930_(whr930) { }
 
   void set_t1_temperature_sensor(sensor::Sensor *temperature_sensor) { t1_temperature_sensor_ = temperature_sensor; }
@@ -27,6 +27,20 @@ class Whr930Sensors : public PollingComponent {
   void set_supply_fan_rpm_sensor(sensor::Sensor *sensor) { supply_fan_rpm_sensor_ = sensor; }
   void set_exhaust_fan_rpm_sensor(sensor::Sensor *sensor) { exhaust_fan_rpm_sensor_ = sensor; }
   void set_filter_hours_sensor(sensor::Sensor *sensor) { filter_hours_sensor_ = sensor; }
+
+  void dump_config() override {
+    ESP_LOGCONFIG(SENSOR_TAG, "WHR930 Sensors:");
+    ESP_LOGCONFIG(SENSOR_TAG, "  T1 Temperature: %s", this->t1_temperature_sensor_ ? "configured" : "disabled");
+    ESP_LOGCONFIG(SENSOR_TAG, "  T2 Temperature: %s", this->t2_temperature_sensor_ ? "configured" : "disabled");
+    ESP_LOGCONFIG(SENSOR_TAG, "  T3 Temperature: %s", this->t3_temperature_sensor_ ? "configured" : "disabled");
+    ESP_LOGCONFIG(SENSOR_TAG, "  T4 Temperature: %s", this->t4_temperature_sensor_ ? "configured" : "disabled");
+    ESP_LOGCONFIG(SENSOR_TAG, "  Bypass Position: %s", this->bypass_position_sensor_ ? "configured" : "disabled");
+    ESP_LOGCONFIG(SENSOR_TAG, "  Supply Fan Speed: %s", this->supply_fan_speed_sensor_ ? "configured" : "disabled");
+    ESP_LOGCONFIG(SENSOR_TAG, "  Exhaust Fan Speed: %s", this->exhaust_fan_speed_sensor_ ? "configured" : "disabled");
+    ESP_LOGCONFIG(SENSOR_TAG, "  Supply Fan RPM: %s", this->supply_fan_rpm_sensor_ ? "configured" : "disabled");
+    ESP_LOGCONFIG(SENSOR_TAG, "  Exhaust Fan RPM: %s", this->exhaust_fan_rpm_sensor_ ? "configured" : "disabled");
+    ESP_LOGCONFIG(SENSOR_TAG, "  Filter Hours: %s", this->filter_hours_sensor_ ? "configured" : "disabled");
+  }
 
   void update() override {
     // Get temperatures

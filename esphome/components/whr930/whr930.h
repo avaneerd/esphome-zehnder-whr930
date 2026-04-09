@@ -10,6 +10,7 @@ class Whr930 : public uart::UARTDevice, public Component {
  public:
     void setup() override;
     void on_shutdown() override;
+    void dump_config() override;
     float get_setup_priority() const override { return setup_priority::LATE; }
 
     bool execute_request(
@@ -29,6 +30,7 @@ class Whr930 : public uart::UARTDevice, public Component {
     uint8_t command_byte,
     uint8_t *data_bytes,
     size_t data_size);
+  void send_ack_();
   uint8_t calculate_checksum(uint8_t *bytes, size_t len);
   bool received_ack();
   bool process_response(uint8_t expected_response_byte, uint8_t *response_data_bytes);
