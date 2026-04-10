@@ -1,9 +1,9 @@
 /**
  * WHR930 Schematic Card for Home Assistant
  *
- * A custom Lovelace card that shows a schematic overview of a Zehnder WHR930
- * heat recovery ventilation unit with live temperature, fan speed, bypass,
- * and heat recovery efficiency data.
+ * A custom Lovelace card that shows a static schematic overview of a Zehnder
+ * WHR930 heat recovery ventilation unit with live temperature, fan speed,
+ * bypass, and heat recovery efficiency data.
  *
  * Installation:
  *   1. Copy this file to <HA config>/www/whr930-schematic-card.js
@@ -26,7 +26,7 @@
  *   title: "Heat Recovery Ventilation"           # optional
  */
 
-const CARD_VERSION = "1.1.0";
+const CARD_VERSION = "1.2.0";
 
 // ── Unique instance counter for gradient IDs ────────────────────────────────
 
@@ -105,16 +105,10 @@ class Whr930SchematicCard extends HTMLElement {
     super();
     this._instanceId = _instanceCounter++;
     this._built = false;
-    this._refs = {};   // named references to DOM elements for updates
+    this._refs = {};
     this._hass = null;
     this._config = null;
     this._entityIds = [];
-    // Track animation durations to detect changes that require animation rebuild
-    this._curSupplyAnimDur = 0;
-    this._curExhaustAnimDur = 0;
-    this._curBypassAnimDur = 0;
-    this._curSupplyFanDur = 0;
-    this._curExhaustFanDur = 0;
   }
 
   // ── Configuration ──
@@ -137,7 +131,6 @@ class Whr930SchematicCard extends HTMLElement {
       config.supply_fan_rpm,
       config.exhaust_fan_rpm,
     ].filter(Boolean);
-    // Config changed — force full rebuild on next render
     this._built = false;
   }
 
@@ -195,10 +188,7 @@ class Whr930SchematicCard extends HTMLElement {
     }
   }
 
-  disconnectedCallback() {
-    // No timers or listeners to clean up currently, but this is the place
-    // to do so if we add any in the future.
-  }
+  disconnectedCallback() {}
 
   // ── Gradient ID helper (per-instance unique) ──
 
@@ -233,11 +223,6 @@ class Whr930SchematicCard extends HTMLElement {
       .info-label { color: var(--secondary-text-color, #999); font-size: 12px; }
       .info-value { font-size: 12px; font-weight: 600; }
       .hidden { display: none; }
-
-      @keyframes spin-cw  { from { transform: rotate(0deg); }   to { transform: rotate(360deg); } }
-      @keyframes spin-ccw { from { transform: rotate(0deg); }   to { transform: rotate(-360deg); } }
-
-      /* spin-cw and spin-ccw are applied dynamically via style.animation on fan icons */
     `;
 
     // ── ha-card ──
@@ -253,24 +238,24 @@ class Whr930SchematicCard extends HTMLElement {
     // ── Defs: gradients ──
     const defs = svgEl("defs");
 
-    // Gradient definitions — we'll create them here and update stop colors in _updateDom
+    // Gradients use userSpaceOnUse so they work on <line> elements
+    // (objectBoundingBox fails for horizontal lines with zero-height bbox).
+    // Each gradient spans the x-range of the line segments it covers.
     const gradients = [
-      { name: "supply-in",   horizontal: true },
-      { name: "supply-hx",   horizontal: true },
-      { name: "supply-out",  horizontal: true },
-      { name: "exhaust-in",  horizontal: true },
-      { name: "exhaust-hx",  horizontal: true },
-      { name: "exhaust-out", horizontal: true },
-      { name: "bypass",      horizontal: true },
+      { name: "supply-in",   x1: "70",  x2: "270" },  // outside → HX entry (y=100)
+      { name: "supply-hx",   x1: "270", x2: "330" },  // diagonal through HX
+      { name: "supply-out",  x1: "330", x2: "530" },  // HX exit → inside (y=190)
+      { name: "exhaust-in",  x1: "330", x2: "530" },  // inside → HX entry (y=100)
+      { name: "exhaust-hx",  x1: "270", x2: "330" },  // diagonal through HX
+      { name: "exhaust-out", x1: "70",  x2: "270" },  // HX exit → outside (y=190)
     ];
 
     this._refs.gradStops = {};
     for (const g of gradients) {
       const grad = svgEl("linearGradient", {
         id: this._gid(g.name),
-        x1: "0", y1: "0",
-        x2: g.horizontal ? "1" : "0",
-        y2: g.horizontal ? "0" : "1",
+        gradientUnits: "userSpaceOnUse",
+        x1: g.x1, y1: "0", x2: g.x2, y2: "0",
       });
       const stop0 = svgEl("stop", { offset: "0%" });
       const stop1 = svgEl("stop", { offset: "100%" });
@@ -291,7 +276,7 @@ class Whr930SchematicCard extends HTMLElement {
     `;
     defs.appendChild(fanSymbol);
 
-    // HX pattern
+    // HX cross-hatch pattern
     const pattern = svgEl("pattern", {
       id: this._gid("hx-pattern"),
       x: "0", y: "0", width: "12", height: "12",
@@ -317,109 +302,130 @@ class Whr930SchematicCard extends HTMLElement {
     }), { textContent: "WHR930" }));
 
     // ── Heat exchanger ──
-    this._refs.hxRect = svgEl("rect", {
+    svg.appendChild(svgEl("rect", {
       x: "268", y: "90", width: "64", height: "110", rx: "6", ry: "6",
       fill: `url(#${this._gid("hx-pattern")})`,
       stroke: "var(--divider-color, #ccc)", "stroke-width": "1",
-    });
-    svg.appendChild(this._refs.hxRect);
+    }));
     svg.appendChild(Object.assign(svgEl("text", {
       x: "300", y: "150", "text-anchor": "middle",
       fill: "var(--secondary-text-color, #999)", "font-size": "9", "font-weight": "400",
     }), { textContent: "HX" }));
 
-    // ── Supply path lines (left-to-right, y=100) ──
-    // Each segment is a separate line so we can apply gradients independently
-    const supplySegments = [
-      { x1: "70",  x2: "195", grad: "supply-in",  cap: true },
-      { x1: "195", x2: "270", grad: "supply-in",  cap: false },
-      { x1: "270", x2: "330", grad: "supply-hx",  cap: false },
-      { x1: "330", x2: "405", grad: "supply-out", cap: false },
-      { x1: "405", x2: "530", grad: "supply-out", cap: true },
-    ];
+    // ── Duct layout ──
+    // Supply path:  Outside(T1,top-left) → fan → HX cross → Inside(T2,bottom-right)
+    // Exhaust path: Inside(T3,bottom-right) → fan → HX cross → Outside(T4,top-left... no)
+    //
+    // Actually for a WHR930 counter-flow HX the layout is:
+    //   Supply:  left y=100 ──fan──> enters HX top-left, crosses to exit bottom-right ──> right y=190
+    //   Exhaust: right y=190... no, let's keep it simpler:
+    //
+    // Horizontal layout with crossing diagonal paths inside the HX:
+    //   Supply:  left y=100 ─── fan ─── ╲  (diagonal down through HX) ─── ╱ ─── right y=190... 
+    //
+    // Simplest correct approach: supply and exhaust are both horizontal but they
+    // swap vertical position inside the HX via diagonal lines:
+    //
+    //   T1 ────── fan ──── ╲           ╱ ────── T2
+    //   (y=100, top-left)    ╲  HX  ╱    (y=190, bottom-right)
+    //                          ╲  ╱
+    //                           ╳
+    //                          ╱  ╲
+    //   T4 ──────────────── ╱  HX  ╲ ── fan ── T3
+    //   (y=190, bottom-left)          (y=100, top-right)
+    //
+    // Supply:  left@y=100 → fan@228 → diagonal 270,100→330,190 → right@y=190
+    // Exhaust: right@y=100 → fan@372 → diagonal 330,100→270,190 → left@y=190
+
+    // ── Supply path (T1 top-left → T2 bottom-right) ──
+    // Segment 1: outside to fan gap (y=100)
     this._refs.supplyLines = [];
-    for (const seg of supplySegments) {
-      const attrs = {
-        x1: seg.x1, y1: "100", x2: seg.x2, y2: "100",
-        stroke: `url(#${this._gid(seg.grad)})`, "stroke-width": "8",
-      };
-      if (seg.cap) attrs["stroke-linecap"] = "round";
-      const line = svgEl("line", attrs);
-      svg.appendChild(line);
-      this._refs.supplyLines.push(line);
-    }
-
-    // Supply flow animation overlay
-    this._refs.supplyAnim = svgEl("line", {
-      x1: "70", y1: "100", x2: "530", y2: "100",
-      stroke: "var(--card-background-color, #fff)", "stroke-width": "8",
-      "stroke-dasharray": "4 20", "stroke-linecap": "round", opacity: "0.5",
-    });
-    svg.appendChild(this._refs.supplyAnim);
-
-    // ── Exhaust path lines (right-to-left, y=190) ──
-    const exhaustSegments = [
-      { x1: "530", x2: "405", grad: "exhaust-in",  cap: true },
-      { x1: "405", x2: "330", grad: "exhaust-in",  cap: false },
-      { x1: "330", x2: "270", grad: "exhaust-hx",  cap: false },
-      { x1: "270", x2: "195", grad: "exhaust-out", cap: false },
-      { x1: "195", x2: "70",  grad: "exhaust-out", cap: true },
-    ];
     this._refs.exhaustLines = [];
-    for (const seg of exhaustSegments) {
+
+    const mkLine = (x1, y1, x2, y2, grad) => {
       const attrs = {
-        x1: seg.x1, y1: "190", x2: seg.x2, y2: "190",
-        stroke: `url(#${this._gid(seg.grad)})`, "stroke-width": "8",
+        x1: String(x1), y1: String(y1), x2: String(x2), y2: String(y2),
+        stroke: `url(#${this._gid(grad)})`, "stroke-width": "8",
+        "stroke-linecap": "round",
       };
-      if (seg.cap) attrs["stroke-linecap"] = "round";
-      const line = svgEl("line", attrs);
-      svg.appendChild(line);
-      this._refs.exhaustLines.push(line);
-    }
+      return svgEl("line", attrs);
+    };
 
-    // Exhaust flow animation overlay
-    this._refs.exhaustAnim = svgEl("line", {
-      x1: "530", y1: "190", x2: "70", y2: "190",
-      stroke: "var(--card-background-color, #fff)", "stroke-width": "8",
-      "stroke-dasharray": "4 20", "stroke-linecap": "round", opacity: "0.5",
-    });
-    svg.appendChild(this._refs.exhaustAnim);
+    // Supply: outside → before fan (y=100)
+    const sL1 = mkLine(70, 100, 214, 100, "supply-in");
+    svg.appendChild(sL1);
+    this._refs.supplyLines.push(sL1);
+    // Supply: after fan → HX entry (y=100)
+    const sL2 = mkLine(242, 100, 270, 100, "supply-in");
+    svg.appendChild(sL2);
+    this._refs.supplyLines.push(sL2);
+    // Supply: diagonal through HX (100→190)
+    const sL3 = mkLine(270, 100, 330, 190, "supply-hx");
+    svg.appendChild(sL3);
+    this._refs.supplyLines.push(sL3);
+    // Supply: HX exit → inside (y=190)
+    const sL4 = mkLine(330, 190, 530, 190, "supply-out");
+    svg.appendChild(sL4);
+    this._refs.supplyLines.push(sL4);
 
-    // ── Bypass path ──
-    this._refs.bypassPath = svgEl("path", {
-      d: "M 250 100 C 250 70, 350 70, 350 100",
-      "stroke-width": "6", fill: "none", "stroke-linecap": "round",
+    // Exhaust: inside → before fan (y=100, right side)
+    const eL1 = mkLine(530, 100, 386, 100, "exhaust-in");
+    svg.appendChild(eL1);
+    this._refs.exhaustLines.push(eL1);
+    // Exhaust: after fan → HX entry (y=100)
+    const eL2 = mkLine(358, 100, 330, 100, "exhaust-in");
+    svg.appendChild(eL2);
+    this._refs.exhaustLines.push(eL2);
+    // Exhaust: diagonal through HX (100→190)
+    const eL3 = mkLine(330, 100, 270, 190, "exhaust-hx");
+    svg.appendChild(eL3);
+    this._refs.exhaustLines.push(eL3);
+    // Exhaust: HX exit → outside (y=190)
+    const eL4 = mkLine(270, 190, 70, 190, "exhaust-out");
+    svg.appendChild(eL4);
+    this._refs.exhaustLines.push(eL4);
+
+    // ── Bypass path (supply air goes straight across, skipping the HX cross) ──
+    this._refs.bypassPath = svgEl("line", {
+      x1: "270", y1: "100", x2: "330", y2: "100",
+      "stroke-width": "6", "stroke-linecap": "round",
+      opacity: "0",
     });
     svg.appendChild(this._refs.bypassPath);
 
-    // Bypass animation overlay
-    this._refs.bypassAnim = svgEl("path", {
-      d: "M 250 100 C 250 70, 350 70, 350 100",
-      stroke: "var(--card-background-color, #fff)", "stroke-width": "6", fill: "none",
-      "stroke-dasharray": "3 16", "stroke-linecap": "round",
-    });
-    svg.appendChild(this._refs.bypassAnim);
-
     // ── Flow direction arrows ──
-    this._refs.arrowSupply1 = svgEl("polygon", { points: "152,93 162,100 152,107" });
-    this._refs.arrowSupply2 = svgEl("polygon", { points: "462,93 472,100 462,107" });
-    this._refs.arrowExhaust1 = svgEl("polygon", { points: "448,183 438,190 448,197" });
-    this._refs.arrowExhaust2 = svgEl("polygon", { points: "138,183 128,190 138,197" });
+    // Arrows sit ON the duct lines but are rendered last (top z-order).
+    // They're large enough (14px tall) to be clearly visible over the 8px ducts.
+    // Each arrow has a thin outline in card-background-color for contrast.
+
+    // Supply arrow 1: top-left, pointing right (y=100)
+    this._refs.arrowSupply1 = svgEl("polygon", { points: "150,91 164,100 150,109" });
+    // Supply arrow 2: bottom-right, pointing right (y=190)
+    this._refs.arrowSupply2 = svgEl("polygon", { points: "460,181 474,190 460,199" });
+    // Exhaust arrow 1: top-right, pointing left (y=100)
+    this._refs.arrowExhaust1 = svgEl("polygon", { points: "450,91 436,100 450,109" });
+    // Exhaust arrow 2: bottom-left, pointing left (y=190)
+    this._refs.arrowExhaust2 = svgEl("polygon", { points: "140,181 126,190 140,199" });
     for (const a of [this._refs.arrowSupply1, this._refs.arrowSupply2,
                       this._refs.arrowExhaust1, this._refs.arrowExhaust2]) {
-      a.setAttribute("opacity", "0.7");
-      svg.appendChild(a);
+      a.setAttribute("stroke", "var(--card-background-color, #fff)");
+      a.setAttribute("stroke-width", "1.5");
+      a.setAttribute("stroke-linejoin", "round");
     }
+    // (arrows are appended after fan icons below)
 
-    // ── Fan icons ──
-    // Supply fan group (only if entity configured)
+    // ── Fan icons (appended AFTER lines so they render on top) ──
+    // Each fan gets a background circle to mask the duct line behind it.
+    const fanBg = { r: "14", fill: "var(--card-background-color, #fff)" };
+
+    // Supply fan: top row, left of HX (x=228, y=100)
+    svg.appendChild(svgEl("circle", { cx: "228", cy: "100", ...fanBg }));
     this._refs.supplyFanGroup = svgEl("g", { transform: "translate(228, 100)" });
     if (!hasSupplyFan) this._refs.supplyFanGroup.classList.add("hidden");
-    this._refs.supplyFanUse = svgEl("use", {
+    this._refs.supplyFanGroup.appendChild(svgEl("use", {
       href: `#${this._gid("fan-icon")}`,
       x: "-14", y: "-14", width: "28", height: "28",
-    });
-    this._refs.supplyFanGroup.appendChild(this._refs.supplyFanUse);
+    }));
     svg.appendChild(this._refs.supplyFanGroup);
 
     this._refs.supplyFanLabel = svgEl("text", {
@@ -435,31 +441,37 @@ class Whr930SchematicCard extends HTMLElement {
     });
     svg.appendChild(this._refs.supplyFanRpm);
 
-    // Exhaust fan group
-    this._refs.exhaustFanGroup = svgEl("g", { transform: "translate(372, 190)" });
+    // Exhaust fan: top row, right of HX (x=372, y=100)
+    svg.appendChild(svgEl("circle", { cx: "372", cy: "100", ...fanBg }));
+    this._refs.exhaustFanGroup = svgEl("g", { transform: "translate(372, 100)" });
     if (!hasExhaustFan) this._refs.exhaustFanGroup.classList.add("hidden");
-    this._refs.exhaustFanUse = svgEl("use", {
+    this._refs.exhaustFanGroup.appendChild(svgEl("use", {
       href: `#${this._gid("fan-icon")}`,
       x: "-14", y: "-14", width: "28", height: "28",
-    });
-    this._refs.exhaustFanGroup.appendChild(this._refs.exhaustFanUse);
+    }));
     svg.appendChild(this._refs.exhaustFanGroup);
 
     this._refs.exhaustFanLabel = svgEl("text", {
-      x: "372", y: "218", "text-anchor": "middle",
+      x: "372", y: "128", "text-anchor": "middle",
       fill: "var(--primary-text-color, #333)", "font-size": "10", "font-weight": "600",
     });
     if (!hasExhaustFan) this._refs.exhaustFanLabel.classList.add("hidden");
     svg.appendChild(this._refs.exhaustFanLabel);
 
     this._refs.exhaustFanRpm = svgEl("text", {
-      x: "372", y: "229", "text-anchor": "middle",
+      x: "372", y: "139", "text-anchor": "middle",
       fill: "var(--secondary-text-color, #999)", "font-size": "8",
     });
     svg.appendChild(this._refs.exhaustFanRpm);
 
+    // ── Flow direction arrows (appended last so they render on top) ──
+    for (const a of [this._refs.arrowSupply1, this._refs.arrowSupply2,
+                      this._refs.arrowExhaust1, this._refs.arrowExhaust2]) {
+      svg.appendChild(a);
+    }
+
     // ── Temperature labels ──
-    // T1: Outside air (top-left)
+    // T1: Outside intake (top-left)
     this._refs.t1Temp = svgEl("text", {
       x: "45", y: "96", "text-anchor": "middle", "font-size": "16", "font-weight": "700",
     });
@@ -469,23 +481,23 @@ class Whr930SchematicCard extends HTMLElement {
       fill: "var(--secondary-text-color, #999)", "font-size": "9",
     }), { textContent: "Outside" }));
 
-    // T2: Supply to inside (top-right)
+    // T2: Supply to inside (bottom-right)
     this._refs.t2Temp = svgEl("text", {
-      x: "555", y: "96", "text-anchor": "middle", "font-size": "16", "font-weight": "700",
+      x: "555", y: "186", "text-anchor": "middle", "font-size": "16", "font-weight": "700",
     });
     svg.appendChild(this._refs.t2Temp);
     svg.appendChild(Object.assign(svgEl("text", {
-      x: "555", y: "112", "text-anchor": "middle",
+      x: "555", y: "202", "text-anchor": "middle",
       fill: "var(--secondary-text-color, #999)", "font-size": "9",
     }), { textContent: "Supply" }));
 
-    // T3: Extract from inside (bottom-right)
+    // T3: Extract from inside (top-right)
     this._refs.t3Temp = svgEl("text", {
-      x: "555", y: "186", "text-anchor": "middle", "font-size": "16", "font-weight": "700",
+      x: "555", y: "96", "text-anchor": "middle", "font-size": "16", "font-weight": "700",
     });
     svg.appendChild(this._refs.t3Temp);
     svg.appendChild(Object.assign(svgEl("text", {
-      x: "555", y: "202", "text-anchor": "middle",
+      x: "555", y: "112", "text-anchor": "middle",
       fill: "var(--secondary-text-color, #999)", "font-size": "9",
     }), { textContent: "Extract" }));
 
@@ -578,29 +590,26 @@ class Whr930SchematicCard extends HTMLElement {
     setGrad("supply-hx", c1, c2);
     setGrad("supply-out", c2, c2);
     setGrad("exhaust-in", c3, c3);
-    setGrad("exhaust-hx", c3, c4);
+    setGrad("exhaust-hx", c4, c3);   // x runs left-to-right but flow is right-to-left: T4(left)→T3(right)
     setGrad("exhaust-out", c4, c4);
-    setGrad("bypass", c1, c1);
 
     // ── Bypass ──
     const bypassFraction = bypass !== null ? Math.max(0, Math.min(100, bypass)) / 100 : 0;
     const hxOpacity = 1 - bypassFraction * 0.6;
 
-    // Apply HX opacity to supply and exhaust lines
     for (const line of refs.supplyLines) line.setAttribute("opacity", hxOpacity);
     for (const line of refs.exhaustLines) line.setAttribute("opacity", hxOpacity);
 
-    // Bypass path visibility and color
     const bypassVisible = bypassFraction > 0.01;
     refs.bypassPath.setAttribute("stroke", c1);
     refs.bypassPath.setAttribute("opacity", bypassVisible ? Math.min(1, bypassFraction * 1.2) : "0");
     refs.bypassPath.setAttribute("stroke-dasharray", bypassFraction > 0.9 ? "none" : "8 4");
 
     // ── Arrows ──
-    refs.arrowSupply1.setAttribute("fill", c1);
-    refs.arrowSupply2.setAttribute("fill", c2);
-    refs.arrowExhaust1.setAttribute("fill", c3);
-    refs.arrowExhaust2.setAttribute("fill", c4);
+    refs.arrowSupply1.setAttribute("fill", c1);   // top-left (outside intake)
+    refs.arrowSupply2.setAttribute("fill", c2);   // bottom-right (supply to inside)
+    refs.arrowExhaust1.setAttribute("fill", c3);  // top-right (extract from inside)
+    refs.arrowExhaust2.setAttribute("fill", c4);  // bottom-left (exhaust to outside)
 
     // ── Temperature labels ──
     const fmtTemp = (v) => v !== null ? `${v.toFixed(1)}\u00B0` : "\u2014";
@@ -620,8 +629,6 @@ class Whr930SchematicCard extends HTMLElement {
       if (Math.abs(denom) > 0.5) {
         const eff = ((t2 - t1) / denom) * 100;
         if (eff < 0 || eff > 100) {
-          // Negative or >100% efficiency means the calculation is not meaningful
-          // (e.g. summer mode, bypass active, or sensor error)
           effText = "Efficiency: N/A";
         } else {
           effText = `Efficiency: ${Math.round(eff)}%`;
@@ -630,7 +637,7 @@ class Whr930SchematicCard extends HTMLElement {
     }
     refs.efficiencyText.textContent = effText;
 
-    // Bypass label
+    // ── Bypass label ──
     refs.bypassText.textContent = bypass !== null ? `Bypass: ${Math.round(bypass)}%` : "";
 
     // ── Fan speed labels ──
@@ -638,137 +645,27 @@ class Whr930SchematicCard extends HTMLElement {
 
     if (cfg.supply_fan_speed) {
       refs.supplyFanLabel.textContent = supplySpeed !== null ? fmtPct(supplySpeed) : "\u2014";
+      refs.supplyFanGroup.setAttribute("color", c1);
     }
     if (cfg.exhaust_fan_speed) {
       refs.exhaustFanLabel.textContent = exhaustSpeed !== null ? fmtPct(exhaustSpeed) : "\u2014";
+      refs.exhaustFanGroup.setAttribute("color", c3);
     }
 
-    // RPM labels (only if entity configured and has value)
     refs.supplyFanRpm.textContent =
       cfg.supply_fan_rpm && supplyRpm !== null ? `${Math.round(supplyRpm)} RPM` : "";
     refs.exhaustFanRpm.textContent =
       cfg.exhaust_fan_rpm && exhaustRpm !== null ? `${Math.round(exhaustRpm)} RPM` : "";
 
-    // ── Animations ──
-    // We use CSS animations via style.animation so they persist across _updateDom calls.
-    // Only rebuild the animation string when the computed duration actually changes,
-    // to avoid restarting.
-
-    // Supply flow animation
-    const supplyAnimDur = supplySpeed && supplySpeed > 0
-      ? Math.max(0.5, 4 - (supplySpeed / 100) * 3) : 0;
-    if (supplyAnimDur !== this._curSupplyAnimDur) {
-      this._curSupplyAnimDur = supplyAnimDur;
-      if (supplyAnimDur > 0) {
-        refs.supplyAnim.setAttribute("opacity", "0.5");
-        this._setSmilAnimation(refs.supplyAnim, "stroke-dashoffset", "0", "-24", supplyAnimDur);
-      } else {
-        refs.supplyAnim.setAttribute("opacity", "0");
-        this._clearSmilAnimation(refs.supplyAnim);
-      }
-    }
-
-    // Exhaust flow animation
-    const exhaustAnimDur = exhaustSpeed && exhaustSpeed > 0
-      ? Math.max(0.5, 4 - (exhaustSpeed / 100) * 3) : 0;
-    if (exhaustAnimDur !== this._curExhaustAnimDur) {
-      this._curExhaustAnimDur = exhaustAnimDur;
-      if (exhaustAnimDur > 0) {
-        refs.exhaustAnim.setAttribute("opacity", "0.5");
-        this._setSmilAnimation(refs.exhaustAnim, "stroke-dashoffset", "0", "24", exhaustAnimDur);
-      } else {
-        refs.exhaustAnim.setAttribute("opacity", "0");
-        this._clearSmilAnimation(refs.exhaustAnim);
-      }
-    }
-
-    // Bypass flow animation
-    const bypassAnimDur = bypassVisible && supplyAnimDur > 0 ? supplyAnimDur : 0;
-    refs.bypassAnim.setAttribute("opacity",
-      bypassAnimDur > 0 ? Math.min(0.5, bypassFraction * 0.6) : "0");
-    if (bypassAnimDur !== this._curBypassAnimDur) {
-      this._curBypassAnimDur = bypassAnimDur;
-      if (bypassAnimDur > 0) {
-        this._setSmilAnimation(refs.bypassAnim, "stroke-dashoffset", "0", "-19", bypassAnimDur);
-      } else {
-        this._clearSmilAnimation(refs.bypassAnim);
-      }
-    }
-
-    // Fan icon rotation — use CSS classes for smooth animation
-    const supplyFanDur = supplySpeed && supplySpeed > 0
-      ? Math.max(0.3, 3 - (supplySpeed / 100) * 2.5) : 0;
-    if (supplyFanDur !== this._curSupplyFanDur) {
-      this._curSupplyFanDur = supplyFanDur;
-      if (supplyFanDur > 0) {
-        refs.supplyFanUse.removeAttribute("opacity");
-        refs.supplyFanUse.style.animation = `spin-cw ${supplyFanDur}s linear infinite`;
-        refs.supplyFanUse.style.transformOrigin = "center";
-      } else {
-        refs.supplyFanUse.setAttribute("opacity", "0.5");
-        refs.supplyFanUse.style.animation = "none";
-      }
-    }
-    refs.supplyFanGroup.setAttribute("color", c1);
-
-    const exhaustFanDur = exhaustSpeed && exhaustSpeed > 0
-      ? Math.max(0.3, 3 - (exhaustSpeed / 100) * 2.5) : 0;
-    if (exhaustFanDur !== this._curExhaustFanDur) {
-      this._curExhaustFanDur = exhaustFanDur;
-      if (exhaustFanDur > 0) {
-        refs.exhaustFanUse.removeAttribute("opacity");
-        refs.exhaustFanUse.style.animation = `spin-ccw ${exhaustFanDur}s linear infinite`;
-        refs.exhaustFanUse.style.transformOrigin = "center";
-      } else {
-        refs.exhaustFanUse.setAttribute("opacity", "0.5");
-        refs.exhaustFanUse.style.animation = "none";
-      }
-    }
-    refs.exhaustFanGroup.setAttribute("color", c3);
-
     // ── Filter status ──
     if (cfg.filter_status && filterStatus) {
       refs.filterStrip.classList.remove("hidden");
       refs.filterValue.textContent = filterStatus;
-      const filterColor = filterStatus.toLowerCase() === "full"
+      refs.filterValue.style.color = filterStatus.toLowerCase() === "full"
         ? "var(--error-color, #db4437)"
         : "var(--success-color, #43a047)";
-      refs.filterValue.style.color = filterColor;
     } else {
       refs.filterStrip.classList.add("hidden");
-    }
-  }
-
-  // ── SMIL animation helpers ──
-  // We use SMIL <animate> elements because CSS cannot animate SVG presentation
-  // attributes like stroke-dashoffset in all browsers. These helpers add/update
-  // SMIL children on the target element only when the duration changes, so the
-  // animation persists across _updateDom calls.
-
-  _setSmilAnimation(el, attr, from, to, dur) {
-    let anim = el.querySelector("animate");
-    if (anim) {
-      // Update existing animation only if duration changed
-      if (anim.getAttribute("dur") === `${dur}s`) return;
-      anim.setAttribute("dur", `${dur}s`);
-    } else {
-      anim = svgEl("animate", {
-        attributeName: attr,
-        from: from,
-        to: to,
-        dur: `${dur}s`,
-        repeatCount: "indefinite",
-      });
-      el.appendChild(anim);
-    }
-    // Force restart
-    if (anim.beginElement) anim.beginElement();
-  }
-
-  _clearSmilAnimation(el) {
-    const anim = el.querySelector("animate");
-    if (anim) {
-      anim.remove();
     }
   }
 }
