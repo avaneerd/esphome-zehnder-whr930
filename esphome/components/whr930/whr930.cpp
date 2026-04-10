@@ -8,11 +8,13 @@ namespace whr930 {
 static const char *TAG = "whr930";
 
 void Whr930::setup() {
-    // Set RS232 mode to "PC Master" (0x03) to claim the bus
-    // This prevents collisions with the CC-Ease panel on the shared RS232 bus
-    uint8_t mode = 0x03;  // PC Master
+    // Set RS232 mode to "PC Log" (0x04) — the ESP monitors and can send
+    // occasional commands, but the unit continues autonomous operation
+    // (bypass control, comfort temp regulation, CC-Ease panel responses).
+    // Mode 0x03 (PC Master) would cause the unit to stop autonomous control.
+    uint8_t mode = 0x04;  // PC Log
     if (this->execute_command(0x9B, &mode, 1)) {
-        ESP_LOGI(TAG, "RS232 mode set to PC Master (0x03)");
+        ESP_LOGI(TAG, "RS232 mode set to PC Log (0x04)");
     } else {
         ESP_LOGE(TAG, "Failed to set RS232 mode - bus collisions may occur");
     }
@@ -30,7 +32,7 @@ void Whr930::on_shutdown() {
 
 void Whr930::dump_config() {
     ESP_LOGCONFIG(TAG, "Zehnder WHR930:");
-    ESP_LOGCONFIG(TAG, "  RS232 mode: PC Master (0x03)");
+    ESP_LOGCONFIG(TAG, "  RS232 mode: PC Log (0x04)");
 }
 
 bool Whr930::execute_request(
